@@ -1,0 +1,2558 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>資訊組電算排班系統</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #1e40af;
+      --primary-hover: #1d4ed8;
+      --accent: #f59e0b;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --border: #cbd5e1;
+      --text: #1e293b;
+      --text-muted: #64748b;
+      --table-border: #000000;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    body {
+      font-family: 'Noto Sans TC', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+    }
+    /* Top Navigation Banner */
+    .top-header {
+      background: linear-gradient(135deg, #1e3a8a, #2563eb);
+      color: white;
+      padding: 0.9rem 1.5rem;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+    }
+    .header-title-group {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+    }
+    .header-avatar-small {
+      width: 46px;
+      height: 46px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2.5px solid #93c5fd;
+      background: #1e293b;
+      flex-shrink: 0;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+    .header-text h1 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .header-text p {
+      font-size: 0.8rem;
+      opacity: 0.9;
+    }
+    .header-right-group {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .today-status-badge {
+      background: rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 9999px;
+      padding: 0.4rem 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.85rem;
+      font-weight: 500;
+    }
+    .pulse-dot {
+      width: 8px;
+      height: 8px;
+      background-color: #10b981;
+      border-radius: 50%;
+      box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+      70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
+    /* Main Container Layout */
+    .app-container {
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      gap: 1.5rem;
+      max-width: 1700px;
+      margin: 1.5rem auto;
+      padding: 0 1.5rem;
+    }
+    @media (max-width: 1100px) {
+      .app-container {
+        grid-template-columns: 1fr;
+      }
+    }
+    /* Sidebar Panels */
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 0.75rem;
+      padding: 1.25rem;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+    .card-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 0.85rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      border-bottom: 2px solid #e2e8f0;
+      padding-bottom: 0.4rem;
+    }
+    /* Creator Profile Card */
+    .creator-card {
+      background: linear-gradient(145deg, #ffffff, #f5f3ff);
+      border: 2px solid #c4b5fd;
+      box-shadow: 0 4px 12px -2px rgba(124, 58, 237, 0.12);
+    }
+    .creator-header {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+    }
+    .creator-avatar-wrap {
+      position: relative;
+    }
+    .creator-avatar {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 3px solid #7c3aed;
+      box-shadow: 0 2px 6px rgba(124, 58, 237, 0.25);
+      background: #0f172a;
+    }
+    .creator-info {
+      flex: 1;
+    }
+    .creator-title {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #7c3aed;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .creator-name {
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: #1e1b4b;
+    }
+    .creator-tag {
+      font-size: 0.75rem;
+      color: #6b21a8;
+      background: #ede9fe;
+      display: inline-block;
+      padding: 0.1rem 0.45rem;
+      border-radius: 4px;
+      margin-top: 2px;
+      font-weight: 600;
+    }
+    .creator-desc {
+      margin-top: 0.65rem;
+      padding-top: 0.6rem;
+      border-top: 1px dashed #ddd6fe;
+      font-size: 0.775rem;
+      color: #5b21b6;
+      line-height: 1.4;
+    }
+    .form-group {
+      margin-bottom: 0.85rem;
+    }
+    .form-group label {
+      display: block;
+      font-size: 0.825rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 0.25rem;
+    }
+    .form-control {
+      width: 100%;
+      padding: 0.5rem 0.75rem;
+      font-size: 0.9rem;
+      border: 1px solid var(--border);
+      border-radius: 0.375rem;
+      background-color: #fff;
+      transition: border-color 0.15s ease-in-out;
+    }
+    .form-control:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+    }
+    .btn-link-action {
+      background: none;
+      border: none;
+      color: var(--primary);
+      cursor: pointer;
+      font-size: 0.775rem;
+      font-weight: 700;
+      padding: 2px 4px;
+      border-radius: 3px;
+    }
+    .btn-link-action:hover {
+      background: #eff6ff;
+    }
+    .text-danger {
+      color: #dc2626 !important;
+    }
+    .text-danger:hover {
+      background: #fef2f2 !important;
+    }
+    /* File Status Banner */
+    .file-status-box {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.5rem 0.75rem;
+      border-radius: 0.375rem;
+      background: #f1f5f9;
+      border: 1px solid #cbd5e1;
+      font-size: 0.8rem;
+      margin-bottom: 0.75rem;
+    }
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      font-weight: 700;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+    }
+    .status-saved {
+      background: #dcfce7;
+      color: #15803d;
+      border: 1px solid #86efac;
+    }
+    .status-unsaved {
+      background: #fef3c7;
+      color: #b45309;
+      border: 1px solid #fcd34d;
+    }
+    /* Personnel List Styling */
+    .person-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+      max-height: 360px;
+      overflow-y: auto;
+      padding-right: 0.25rem;
+    }
+    .person-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.5rem 0.65rem;
+      background: #f1f5f9;
+      border-radius: 0.5rem;
+      border: 1px solid #e2e8f0;
+      gap: 0.5rem;
+    }
+    .person-info {
+      flex: 1;
+      min-width: 0;
+    }
+    .person-name-row {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .person-name {
+      font-weight: 700;
+      font-size: 0.95rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: #0f172a;
+    }
+    .person-color-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      border: 1px solid rgba(0,0,0,0.2);
+    }
+    .person-shifts-badge {
+      font-size: 0.725rem;
+      font-weight: 700;
+      background: #e0e7ff;
+      color: #3730a3;
+      padding: 0.15rem 0.45rem;
+      border-radius: 9999px;
+      white-space: nowrap;
+    }
+    .person-days-tag {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 0.15rem;
+    }
+    .auto-schedule-label {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #475569;
+      cursor: pointer;
+      user-select: none;
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      padding: 2px 5px;
+      border-radius: 4px;
+      white-space: nowrap;
+    }
+    .auto-schedule-label input[type="checkbox"] {
+      cursor: pointer;
+    }
+    .btn-icon {
+      background: none;
+      border: none;
+      color: #ef4444;
+      cursor: pointer;
+      font-size: 0.85rem;
+      padding: 0.25rem;
+      border-radius: 0.25rem;
+    }
+    .btn-icon:hover {
+      background: #fee2e2;
+    }
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.35rem;
+      padding: 0.55rem 1rem;
+      font-size: 0.875rem;
+      font-weight: 600;
+      border-radius: 0.375rem;
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: all 0.15s ease-in-out;
+      width: 100%;
+    }
+    .btn-primary {
+      background-color: var(--primary);
+      color: white;
+    }
+    .btn-primary:hover {
+      background-color: var(--primary-hover);
+    }
+    .btn-success {
+      background-color: #059669;
+      color: white;
+    }
+    .btn-success:hover {
+      background-color: #047857;
+    }
+    .btn-outline {
+      background-color: white;
+      border-color: var(--border);
+      color: var(--text);
+    }
+    .btn-outline:hover {
+      background-color: #f1f5f9;
+      border-color: #94a3b8;
+    }
+    .btn-warning {
+      background-color: #d97706;
+      color: white;
+    }
+    .btn-warning:hover {
+      background-color: #b45309;
+    }
+    .btn-save-disk {
+      background: linear-gradient(135deg, #2563eb, #1d4ed8);
+      color: white;
+      font-size: 0.95rem;
+      padding: 0.65rem 1rem;
+      box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
+    }
+    .btn-save-disk:hover {
+      background: linear-gradient(135deg, #1d4ed8, #1e40af);
+      box-shadow: 0 4px 6px rgba(37, 99, 235, 0.3);
+    }
+    .btn-group-vertical {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    .weekday-selector {
+      display: flex;
+      gap: 0.35rem;
+      margin-top: 0.25rem;
+    }
+    .weekday-selector label {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      background: #e2e8f0;
+      border-radius: 0.25rem;
+      font-size: 0.75rem;
+      font-weight: 700;
+      cursor: pointer;
+      user-select: none;
+    }
+    .weekday-selector input[type="checkbox"] {
+      display: none;
+    }
+    .weekday-selector input[type="checkbox"]:checked + span {
+      background: var(--primary);
+      color: white;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 0.25rem;
+    }
+    /* Main Duty Sheet (A4 Container) */
+    .sheet-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .sheet-toolbar {
+      width: 100%;
+      max-width: 210mm;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.75rem;
+      background: white;
+      padding: 0.6rem 1rem;
+      border-radius: 0.5rem;
+      border: 1px solid var(--border);
+    }
+    .display-mode-group {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.85rem;
+      font-weight: 500;
+    }
+    .a4-sheet {
+      background: white;
+      width: 210mm;
+      min-height: 297mm;
+      padding: 15mm 15mm 12mm 15mm;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+      border: 1px solid #cbd5e1;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+    }
+    .roster-title {
+      text-align: center;
+      font-size: 16.5pt;
+      font-weight: 900;
+      color: #000;
+      letter-spacing: 1px;
+      margin-bottom: 12px;
+      font-family: 'Noto Sans TC', serif, sans-serif;
+    }
+    .roster-table {
+      width: 100%;
+      border-collapse: collapse !important;
+      border: 2.5px solid #000000 !important;
+      table-layout: fixed;
+      font-family: 'Noto Sans TC', sans-serif;
+      empty-cells: show !important;
+    }
+    .roster-table th, 
+    .roster-table td {
+      border: 1.5px solid #000000 !important;
+      text-align: center;
+      vertical-align: middle;
+      padding: 0;
+      position: relative;
+      background-clip: padding-box !important;
+      empty-cells: show !important;
+      box-sizing: border-box;
+    }
+    .col-time {
+      width: 70px;
+    }
+    .col-day {
+      width: calc((100% - 70px) / 5);
+    }
+    .diagonal-header {
+      width: 70px;
+      height: 48px;
+      position: relative;
+      background: linear-gradient(to top right, transparent calc(50% - 0.75px), #000000 calc(50% - 0.75px), #000000 calc(50% + 0.75px), transparent calc(50% + 0.75px)) !important;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+    .diagonal-header .label-top-right {
+      position: absolute;
+      top: 4px;
+      right: 12px;
+      font-size: 13pt;
+      font-weight: 700;
+    }
+    .diagonal-header .label-bottom-left {
+      position: absolute;
+      bottom: 4px;
+      left: 6px;
+      font-size: 11pt;
+      font-weight: 700;
+    }
+    .weekday-header {
+      font-size: 14pt;
+      font-weight: 700;
+      height: 48px;
+      background: #fafafa;
+    }
+    .row-date {
+      height: 28px;
+      font-size: 10.5pt;
+      font-weight: 700;
+      background: transparent;
+    }
+    .row-duty {
+      height: 54px;
+      cursor: pointer;
+      transition: background-color 0.15s ease;
+      background: transparent;
+    }
+    .row-duty:hover {
+      background-color: #f1f5f9;
+    }
+    .row-signature {
+      height: 48px;
+      background: transparent;
+      font-size: 10.5pt;
+      color: #000000;
+    }
+    .time-slot-cell {
+      font-size: 8.5pt;
+      font-weight: 700;
+      line-height: 1.2;
+      padding: 2px 4px !important;
+      letter-spacing: -0.3px;
+    }
+    .duty-cell-content {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      padding: 2px;
+    }
+    .duty-name {
+      font-size: 13pt;
+      font-weight: 700;
+      letter-spacing: 2px;
+      color: #000;
+    }
+    .duty-avatar-img {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      object-fit: cover;
+      flex-shrink: 0;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+    .duty-cell-empty {
+      color: #94a3b8;
+      font-size: 9pt;
+    }
+    .slash-cell {
+      position: relative;
+      background: transparent !important;
+    }
+    .slash-cell::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(to bottom right, transparent calc(50% - 0.75px), #000000 calc(50% - 0.75px), #000000 calc(50% + 0.75px), transparent calc(50% + 0.75px)) !important;
+      pointer-events: none;
+      z-index: 1;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+    .is-today-cell {
+      position: relative;
+    }
+    .is-today-cell .today-indicator {
+      position: absolute;
+      top: 2px;
+      right: 4px;
+      font-size: 7pt;
+      background: #ef4444;
+      color: white;
+      padding: 1px 4px;
+      border-radius: 3px;
+      font-weight: bold;
+    }
+    .duty-note-text {
+      font-size: 11pt;
+      font-weight: 800;
+      color: #000000;
+      letter-spacing: 0.5px;
+      line-height: 1.25;
+      display: inline-block;
+      padding: 2px 6px;
+      word-break: break-all;
+    }
+    .roster-footnote {
+      margin-top: 14px;
+      text-align: center;
+      font-size: 11.5pt;
+      font-weight: 800;
+      color: #000;
+      font-family: 'Noto Sans TC', sans-serif;
+    }
+    /* Modal styles */
+    .modal-backdrop {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.45);
+      backdrop-filter: blur(2px);
+      z-index: 999;
+      justify-content: center;
+      align-items: center;
+    }
+    .modal-backdrop.show {
+      display: flex;
+    }
+    .modal-dialog {
+      background: white;
+      border-radius: 0.75rem;
+      width: 90%;
+      max-width: 440px;
+      padding: 1.5rem;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+      border-bottom: 1px solid #e2e8f0;
+      padding-bottom: 0.5rem;
+    }
+    .modal-header h3 {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--primary);
+    }
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: 1.25rem;
+      cursor: pointer;
+      color: #64748b;
+    }
+    .modal-body {
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+    }
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.5rem;
+      margin-top: 1.25rem;
+      border-top: 1px solid #e2e8f0;
+      padding-top: 0.75rem;
+    }
+    #personModal .modal-dialog {
+      max-width: 460px;
+    }
+    #batchImportModal .modal-dialog {
+      max-width: 480px;
+    }
+    /* Toast Notification */
+    .toast-notice {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #1e293b;
+      color: white;
+      padding: 0.75rem 1.25rem;
+      border-radius: 0.5rem;
+      box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3);
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      z-index: 1000;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: all 0.3s ease;
+      pointer-events: none;
+    }
+    .toast-notice.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    /* Print Styles */
+    @media print {
+      * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
+      }
+      body {
+        background: white !important;
+        color: black !important;
+      }
+      .top-header,
+      .sidebar,
+      .sheet-toolbar,
+      .modal-backdrop,
+      .creator-card,
+      .toast-notice,
+      .no-print {
+        display: none !important;
+      }
+      .print-spacer {
+        display: inline-block !important;
+      }
+      .app-container {
+        display: block !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        max-width: 100% !important;
+      }
+      .sheet-wrapper {
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+      .a4-sheet {
+        width: 100% !important;
+        min-height: auto !important;
+        box-shadow: none !important;
+        border: none !important;
+        padding: 8mm 12mm 6mm 12mm !important;
+        background: white !important;
+      }
+      .roster-title {
+        font-size: 17pt !important;
+        margin-bottom: 14px !important;
+        color: #000000 !important;
+      }
+      .roster-table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+        border: 2.5px solid #000000 !important;
+        empty-cells: show !important;
+        table-layout: fixed !important;
+      }
+      .roster-table th, 
+      .roster-table td {
+        border: 1.5px solid #000000 !important;
+        background-clip: padding-box !important;
+        empty-cells: show !important;
+      }
+      .row-date td,
+      .row-duty td,
+      .row-signature td {
+        border: 1.5px solid #000000 !important;
+      }
+      .row-date {
+        height: 28px !important;
+        min-height: 28px !important;
+        background: transparent !important;
+      }
+      .row-duty {
+        height: 54px !important;
+        min-height: 54px !important;
+        background: transparent !important;
+      }
+      .row-signature {
+        height: 48px !important;
+        min-height: 48px !important;
+        background: transparent !important;
+      }
+      .diagonal-header {
+        background: linear-gradient(to top right, transparent calc(50% - 0.75px), #000000 calc(50% - 0.75px), #000000 calc(50% + 0.75px), transparent calc(50% + 0.75px)) !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+      .slash-cell {
+        background: transparent !important;
+      }
+      .slash-cell::before {
+        background: linear-gradient(to bottom right, transparent calc(50% - 0.75px), #000000 calc(50% - 0.75px), #000000 calc(50% + 0.75px), transparent calc(50% + 0.75px)) !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+      .duty-note-text {
+        font-size: 11pt !important;
+        font-weight: 800 !important;
+        color: #000000 !important;
+        background: transparent !important;
+      }
+      .roster-footnote {
+        font-size: 11.5pt !important;
+        font-weight: 800 !important;
+        color: #000000 !important;
+      }
+      .today-indicator {
+        display: none !important;
+      }
+      @page {
+        size: A4 portrait;
+        margin: 10mm;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Header -->
+  <header class="top-header">
+    <div class="header-title-group">
+      <img id="headerAvatarImg" src="https://i.postimg.cc/wMtYTHP3/vts-2026-07-30-21-57-54.png" class="header-avatar-small" alt="製作者人設" onerror="this.src='https://i.postimg.cc/wMtYTHP3/vts-2026-07-30-21-57-54.png'">
+      <div class="header-text">
+        <h1>🏢 資訊組電算排班系統</h1>
+        <p>第14屆資訊組長 吳明傑 研發製作｜供歷屆幹部平日排班使用</p>
+      </div>
+    </div>
+    <div class="header-right-group">
+      <div class="today-status-badge">
+        <span class="pulse-dot"></span>
+        <span id="networkDateDisplay">連線同步今日：載入中...</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Draft Recovery Banner -->
+  <div id="draftRecoveryBanner" style="display: none; background: #fffbeb; border-bottom: 2px solid #fde68a; padding: 0.6rem 1.5rem; justify-content: space-between; align-items: center; font-size: 0.85rem; color: #92400e;" class="no-print">
+    <div>
+      ⚠️ <strong>偵測到這台電腦有尚未存檔的本機草稿</strong>（編輯於 <span id="draftTimeText"></span>），系統已自動為您載入這份檔案最後儲存的正式內容。
+    </div>
+    <div style="display: flex; gap: 0.5rem;">
+      <button type="button" class="btn btn-outline" style="width: auto; padding: 0.2rem 0.6rem; font-size: 0.8rem; background: white;" onclick="applyDraft()">📝 還原本機草稿</button>
+      <button type="button" class="btn btn-outline" style="width: auto; padding: 0.2rem 0.6rem; font-size: 0.8rem; background: white;" onclick="dismissDraftBanner(true)">🗑️ 捨棄草稿 (以原檔為準)</button>
+    </div>
+  </div>
+
+  <!-- Main Grid -->
+  <div class="app-container">
+
+    <!-- Left Sidebar: Settings & Staff -->
+    <aside class="sidebar">
+
+      <!-- Creator Profile Card -->
+      <div class="card creator-card">
+        <div class="creator-header">
+          <div class="creator-avatar-wrap">
+            <img id="creatorAvatarImg" src="https://i.postimg.cc/wMtYTHP3/vts-2026-07-30-21-57-54.png" class="creator-avatar" alt="製作者人設" onerror="this.src='https://i.postimg.cc/wMtYTHP3/vts-2026-07-30-21-57-54.png'">
+          </div>
+          <div class="creator-info">
+            <div class="creator-title">製作人</div>
+            <div class="creator-name">吳明傑 </div>
+            <span class="creator-tag">第14屆・資訊組長</span>
+          </div>
+        </div>
+        <div class="creator-desc">
+          ✨ 本系統專為勤益學生學舍資訊組平日電算值班自動化排班，交接傳承給歷屆幹部使用。
+        </div>
+      </div>
+
+      <!-- Panel 0: Storage & Cloud Sync (檔案儲存與雲端同步) -->
+      <div class="card" style="border: 2px solid #3b82f6; background: #f0fdf4;">
+        <h2 class="card-title" style="color: #1d4ed8; border-bottom-color: #bfdbfe;">
+          💾 檔案儲存與雲端同步
+        </h2>
+        
+        <div class="file-status-box">
+          <span style="font-size: 0.8rem; color: #475569;" id="linkedFileNameText">已綁定：資訊組電算排班系統.html</span>
+          <span class="status-badge status-unsaved" id="fileStatusBadge">
+            <span id="statusDot">●</span> <span id="fileStatusText">尚未寫入檔案</span>
+          </span>
+        </div>
+
+        <div class="btn-group-vertical">
+          <button class="btn btn-save-disk" onclick="saveDirectlyToDisk()">
+            💾 覆蓋儲存本機 HTML 原檔
+          </button>
+          
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem;">
+            <button class="btn btn-outline" style="font-size: 0.75rem; padding: 0.35rem 0.5rem;" onclick="openAndLinkLocalFile()">
+              📂 綁定本機檔
+            </button>
+            <button class="btn btn-outline" style="font-size: 0.75rem; padding: 0.35rem 0.5rem; color: #475569;" onclick="clearLocalCache()">
+              🧹 清除本機暫存
+            </button>
+          </div>
+
+          <!-- Cloud Sync Section -->
+          <div style="border-top: 1px dashed #cbd5e1; margin-top: 0.35rem; padding-top: 0.45rem;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem;">
+              <button class="btn btn-success" style="font-size: 0.8rem; padding: 0.4rem 0.5rem;" onclick="syncToCloud()">
+                ☁️ 同步至雲端
+              </button>
+              <button class="btn btn-outline" style="font-size: 0.8rem; padding: 0.4rem 0.5rem;" onclick="loadFromCloud()">
+                📥 從雲端載入
+              </button>
+            </div>
+            <div style="display: flex; justify-content: flex-end; margin-top: 0.35rem;">
+              <button type="button" class="btn-link-action" style="font-size: 0.75rem;" onclick="openCloudConfigModal()">⚙️ 雲端 API / 密碼設定</button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Panel 1: Roster Config (多排班管理 + 移除學年度學期) -->
+      <div class="card">
+        <h2 class="card-title">📅 排班基本設定</h2>
+
+        <!-- 多排班切換選單 -->
+        <div class="form-group">
+          <label style="display: flex; justify-content: space-between; align-items: center;">
+            <span>目前排班表</span>
+            <span style="display: flex; gap: 4px;">
+              <button type="button" class="btn-link-action" onclick="createRoster()">➕ 新增</button>
+              <button type="button" class="btn-link-action" onclick="renameRoster()">✏️ 命名</button>
+              <button type="button" class="btn-link-action text-danger" onclick="deleteRoster()">🗑️ 刪除</button>
+            </span>
+          </label>
+          <select id="rosterSelect" class="form-control" onchange="onRosterChange(this.value)">
+            <!-- Options populated dynamically -->
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>月份</label>
+          <select id="monthSelect" class="form-control">
+            <option value="1">1 月份</option>
+            <option value="2">2 月份</option>
+            <option value="3">3 月份</option>
+            <option value="4">4 月份</option>
+            <option value="5">5 月份</option>
+            <option value="6">6 月份</option>
+            <option value="7">7 月份</option>
+            <option value="8">8 月份</option>
+            <option value="9">9 月份</option>
+            <option value="10">10 月份</option>
+            <option value="11">11 月份</option>
+            <option value="12">12 月份</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>值班表大標題</label>
+          <input type="text" id="rosterTitleInput" class="form-control" value="115-1 學期 資訊組幹部十月份平日值班表">
+        </div>
+        <div class="form-group">
+          <label>時段文字 (例: 18:00-21:00)</label>
+          <input type="text" id="timeSlotInput" class="form-control" value="18:00-21:00">
+        </div>
+        <div class="form-group">
+          <label>頁尾附註說明</label>
+          <input type="text" id="footnoteInput" class="form-control" value="記得去值班，哈哈">
+        </div>
+      </div>
+
+      <!-- Panel 2: Personnel & Availability (加入排班勾選 + 批次匯入/清空) -->
+      <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.6rem;">
+          <h2 class="card-title" style="margin-bottom: 0; border: none; padding: 0;">👥 幹部人員</h2>
+          <div style="display: flex; gap: 4px;">
+            <button class="btn btn-outline" style="width: auto; padding: 0.25rem 0.5rem; font-size: 0.75rem;" onclick="openBatchImportModal()">📋 批次匯入</button>
+            <button class="btn btn-outline" style="width: auto; padding: 0.25rem 0.5rem; font-size: 0.75rem;" onclick="openAddPersonModal()">+ 新增</button>
+            <button class="btn btn-outline text-danger" style="width: auto; padding: 0.25rem 0.5rem; font-size: 0.75rem;" onclick="clearAllPersons()">🗑️ 清空</button>
+          </div>
+        </div>
+        
+        <!-- Personnel List -->
+        <div class="person-list" id="personListContainer">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+
+      <!-- Panel 3: Action Buttons -->
+      <div class="card">
+        <h2 class="card-title">⚡ 排班動作操作</h2>
+        <div class="btn-group-vertical">
+          <button class="btn btn-success" onclick="runAutoSchedule(false)">🤖 自動排班 (僅填當月未排天數)</button>
+          <button class="btn btn-outline" onclick="runAutoSchedule(true)">🔄 全部重新排班</button>
+          <button class="btn btn-warning" onclick="clearCurrentMonthShifts()">📄 清空當月排班</button>
+          <button class="btn btn-primary" onclick="window.print()" style="font-size: 1rem; padding: 0.75rem;">🖨️ 匯出PDF / 直接列印</button>
+        </div>
+      </div>
+
+    </aside>
+
+    <!-- Right: A4 Sheet Preview -->
+    <main class="sheet-wrapper">
+      
+      <!-- Sheet Toolbar -->
+      <div class="sheet-toolbar no-print">
+        <div class="display-mode-group">
+          <span>幹部顯示樣式：</span>
+          <label><input type="radio" name="displayMode" value="text" onchange="changeDisplayMode(this.value)"> 姓名文字</label>
+          <label><input type="radio" name="displayMode" value="color" onchange="changeDisplayMode(this.value)"> 代表色+姓名</label>
+          <label><input type="radio" name="displayMode" value="avatar" checked="checked" onchange="changeDisplayMode(this.value)"> 照片頭像+姓名</label>
+          <label><input type="radio" name="displayMode" value="only_color_avatar" onchange="changeDisplayMode(this.value)"> 純照片/純色塊</label>
+        </div>
+        <div>
+          <span style="font-size: 0.8rem; color: #64748b;">💡 點擊日期格子可手動換班、免值班劃斜線或填寫備註</span>
+        </div>
+      </div>
+
+      <!-- A4 Page Container -->
+      <div class="a4-sheet" id="printSheet">
+        
+        <!-- Document Title -->
+        <div class="roster-title" id="displayRosterTitle">115-1 學期 資訊組幹部十月份平日值班表</div>
+
+        <!-- Roster Table -->
+        <table class="roster-table" id="rosterTable">
+          <colgroup>
+            <col class="col-time">
+            <col class="col-day">
+            <col class="col-day">
+            <col class="col-day">
+            <col class="col-day">
+            <col class="col-day">
+          </colgroup>
+          <thead>
+            <tr>
+              <th class="diagonal-header">
+                <span class="label-top-right">週</span>
+                <span class="label-bottom-left">時段</span>
+              </th>
+              <th class="weekday-header">一</th>
+              <th class="weekday-header">二</th>
+              <th class="weekday-header">三</th>
+              <th class="weekday-header">四</th>
+              <th class="weekday-header">五</th>
+            </tr>
+          </thead>
+          <tbody id="rosterTableBody">
+            <!-- Dynamically populated -->
+          </tbody>
+        </table>
+
+        <!-- Footnote -->
+        <div class="roster-footnote" id="displayFootnote">記得去值班，哈哈</div>
+
+      </div>
+
+    </main>
+
+  </div>
+
+  <!-- Toast Notice -->
+  <div class="toast-notice" id="toastNotice">
+    <span id="toastIcon">💾</span>
+    <span id="toastMsg">儲存成功</span>
+  </div>
+
+  <!-- Edit Cell Modal -->
+  <div class="modal-backdrop" id="editCellModal">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 id="modalDateTitle">排班設定</h3>
+        <button class="modal-close" onclick="closeEditModal()">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>快速操作：</label>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+            <button type="button" class="btn btn-outline" onclick="setCellNoDuty()">🚫 當天不必值班 (劃斜線)</button>
+            <button type="button" class="btn btn-outline" onclick="setCellEmpty()">⚪ 設為空白 (未排班)</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>指派值班幹部：</label>
+          <select id="modalPersonSelect" class="form-control"></select>
+        </div>
+        <div class="form-group">
+          <label>當日備註 (選填，如：迎新、放假)：</label>
+          <input type="text" id="modalNoteInput" class="form-control" placeholder="輸入備註文字...">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" style="width: auto;" onclick="closeEditModal()">取消</button>
+        <button class="btn btn-primary" style="width: auto;" onclick="saveCellEdit()">確認儲存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add/Edit Person Modal -->
+  <div class="modal-backdrop" id="personModal">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 id="personModalTitle">新增幹部人員</h3>
+        <button class="modal-close" onclick="closePersonModal()">×</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="editPersonId">
+        <div class="form-group">
+          <label>姓名：</label>
+          <input type="text" id="personNameInput" class="form-control" placeholder="例：吳明傑">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>個人代表顏色：</label>
+            <input type="color" id="personColorInput" class="form-control" style="height: 38px; padding: 2px;" value="#10b981">
+          </div>
+          <div class="form-group">
+            <label>照片頭像上傳：</label>
+            <input type="file" id="personAvatarFile" class="form-control" accept="image/*" onchange="handleAvatarUpload(event)">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>每週可值班星期：</label>
+          <div class="weekday-selector">
+            <label><input type="checkbox" id="avail_1" checked=""><span>一</span></label>
+            <label><input type="checkbox" id="avail_2" checked=""><span>二</span></label>
+            <label><input type="checkbox" id="avail_3" checked=""><span>三</span></label>
+            <label><input type="checkbox" id="avail_4" checked=""><span>四</span></label>
+            <label><input type="checkbox" id="avail_5" checked=""><span>五</span></label>
+          </div>
+        </div>
+        <div class="form-group" style="margin-top: 0.25rem;">
+          <label style="display: flex; align-items: center; gap: 0.4rem; cursor: pointer;">
+            <input type="checkbox" id="personAutoScheduleModal" checked>
+            <span>加入自動排班名單</span>
+          </label>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" style="width: auto;" onclick="closePersonModal()">取消</button>
+        <button class="btn btn-primary" style="width: auto;" onclick="savePerson()">儲存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Batch Import Modal (一鍵匯入名單) -->
+  <div class="modal-backdrop" id="batchImportModal">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3>📋 批次匯入幹部名單</h3>
+        <button class="modal-close" onclick="closeBatchImportModal()">×</button>
+      </div>
+      <div class="modal-body">
+        <label style="font-size: 0.825rem; color: var(--text-muted);">
+          請貼上一整行/欄姓名（一行一人，支援 Excel 整欄直接複製貼上）：
+        </label>
+        <textarea id="batchImportText" class="form-control" rows="8" placeholder="吳享蓁&#10;李俊緯&#10;吳明傑"></textarea>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" style="width: auto;" onclick="closeBatchImportModal()">取消</button>
+        <button class="btn btn-primary" style="width: auto;" onclick="submitBatchImport()">確認匯入</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Cloud Config Modal (雲端設定彈窗) -->
+  <div class="modal-backdrop" id="cloudConfigModal">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3>⚙️ 雲端同步設定</h3>
+        <button class="modal-close" onclick="closeCloudConfigModal()">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Google Apps Script Web App 網址：</label>
+          <input type="text" id="cloudApiUrlInput" class="form-control" placeholder="https://script.google.com/macros/s/.../exec">
+        </div>
+        <div class="form-group">
+          <label>管理員儲存密碼：</label>
+          <input type="password" id="cloudPasswordInput" class="form-control" placeholder="輸入後端設定的管理員密碼">
+        </div>
+      </div>
+      <div class="modal-footer" style="display: flex; justify-content: space-between;">
+        <button type="button" class="btn btn-outline" style="width: auto; padding: 0.4rem 0.75rem;" onclick="testCloudConnection()">🔌 測試連線</button>
+        <div style="display: flex; gap: 0.5rem;">
+          <button class="btn btn-outline" style="width: auto;" onclick="closeCloudConfigModal()">取消</button>
+          <button class="btn btn-primary" style="width: auto;" onclick="saveCloudConfig()">儲存設定</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 初始現役幹部名單
+    const initialCadres = [
+      {
+        "id": "p1",
+        "name": "吳享蓁",
+        "color": "#9333ea",
+        "avatar": "",
+        "avail": [1, 2, 3, 4],
+        "autoSchedule": true
+      },
+      {
+        "id": "p2",
+        "name": "李俊緯",
+        "color": "#0284c7",
+        "avatar": "",
+        "avail": [1, 2, 3, 4, 5],
+        "autoSchedule": true
+      },
+      {
+        "id": "p3",
+        "name": "吳明傑",
+        "color": "#10b981",
+        "avatar": "https://i.postimg.cc/wMtYTHP3/vts-2026-07-30-21-57-54.png",
+        "avail": [1, 2, 3, 4],
+        "autoSchedule": true
+      }
+    ];
+
+    // 初始排班表資料庫 (支援多排班)
+    const initialRosters = [
+      {
+        "id": "roster_default",
+        "name": "資訊組平日值班",
+        "title": "115-1 學期 資訊組幹部十月份平日值班表",
+        "timeSlot": "18:00-21:00",
+        "footnote": "記得去值班，哈哈",
+        "month": 10,
+        "persons": JSON.parse(JSON.stringify(initialCadres)),
+        "schedule": {
+          "2026-09-01": { "dutyPersonId": null, "slash": true, "note": "" },
+          "2026-09-02": { "dutyPersonId": null, "slash": true, "note": "" },
+          "2026-09-03": { "dutyPersonId": null, "slash": true, "note": "" },
+          "2026-09-04": { "dutyPersonId": null, "slash": true, "note": "" },
+          "2026-09-07": { "dutyPersonId": null, "slash": true, "note": "" },
+          "2026-09-08": { "dutyPersonId": null, "slash": true, "note": "" },
+          "2026-09-09": { "dutyPersonId": "p2", "slash": false, "note": "" },
+          "2026-09-10": { "dutyPersonId": "p3", "slash": false, "note": "" },
+          "2026-09-11": { "dutyPersonId": "p2", "slash": false, "note": "" },
+          "2026-09-14": { "dutyPersonId": "p1", "slash": false, "note": "" },
+          "2026-09-15": { "dutyPersonId": "p3", "slash": false, "note": "" },
+          "2026-09-16": { "dutyPersonId": "p1", "slash": false, "note": "" },
+          "2026-09-17": { "dutyPersonId": "p2", "slash": false, "note": "" },
+          "2026-09-18": { "dutyPersonId": "p2", "slash": false, "note": "" },
+          "2026-09-21": { "dutyPersonId": "p3", "slash": false, "note": "" },
+          "2026-09-22": { "dutyPersonId": null, "slash": true, "note": "迎新" },
+          "2026-09-23": { "dutyPersonId": null, "slash": true, "note": "迎新" },
+          "2026-09-24": { "dutyPersonId": "p1", "slash": false, "note": "" },
+          "2026-09-25": { "dutyPersonId": null, "slash": true, "note": "" },
+          "2026-09-28": { "dutyPersonId": null, "slash": true, "note": "" },
+          "2026-09-29": { "dutyPersonId": "p1", "slash": false, "note": "" },
+          "2026-09-30": { "dutyPersonId": "p3", "slash": false, "note": "" },
+          "2026-10-01": { "dutyPersonId": "p2", "slash": false, "note": "" },
+          "2026-10-02": { "dutyPersonId": "p2", "slash": false, "note": "" },
+          "2026-10-05": { "dutyPersonId": "p1", "slash": false, "note": "" },
+          "2026-10-06": { "dutyPersonId": "p3", "slash": false, "note": "" },
+          "2026-10-07": { "dutyPersonId": "p1", "slash": false, "note": "" },
+          "2026-10-08": { "dutyPersonId": "p3", "slash": false, "note": "" },
+          "2026-10-09": { "dutyPersonId": null, "slash": true, "note": "" },
+          "2026-10-12": { "dutyPersonId": "p1", "slash": false, "note": "" },
+          "2026-10-13": { "dutyPersonId": "p2", "slash": false, "note": "" },
+          "2026-10-14": { "dutyPersonId": "p3", "slash": false, "note": "" },
+          "2026-10-15": { "dutyPersonId": "p1", "slash": false, "note": "" },
+          "2026-10-16": { "dutyPersonId": "p2", "slash": false, "note": "" },
+          "2026-10-19": { "dutyPersonId": "p3", "slash": false, "note": "" },
+          "2026-10-20": { "dutyPersonId": "p2", "slash": false, "note": "" },
+          "2026-10-21": { "dutyPersonId": "p1", "slash": false, "note": "" },
+          "2026-10-22": { "dutyPersonId": "p3", "slash": false, "note": "" },
+          "2026-10-23": { "dutyPersonId": "p2", "slash": false, "note": "" },
+          "2026-10-26": { "dutyPersonId": null, "slash": true, "note": "" },
+          "2026-10-27": { "dutyPersonId": "p1", "slash": false, "note": "" },
+          "2026-10-28": { "dutyPersonId": "p3", "slash": false, "note": "" },
+          "2026-10-29": { "dutyPersonId": "p1", "slash": false, "note": "" },
+          "2026-10-30": { "dutyPersonId": "p2", "slash": false, "note": "" }
+        }
+      }
+    ];
+
+    // 排班基本設定常數
+    const initialConfig = {
+      "year": 2026,
+      "activeRosterId": "roster_default",
+      "displayMode": "avatar",
+      "cloudApiUrl": "https://script.google.com/macros/s/AKfycbx2lIE11_0b0EFIFw1gJobKuLzlglnvevf8bsGW3ccu722FcANpsP3xLNP0AdhOWfr5/exec",
+      "cloudPassword": "",
+      "fileSavedTime": 1789355000000,
+      "fileSavedAt": "2026-09-14 17:30:00"
+    };
+
+    let state = {
+      ...initialConfig,
+      rosters: JSON.parse(JSON.stringify(initialRosters)),
+      persons: JSON.parse(JSON.stringify(initialCadres))
+    };
+
+    // 當前作用中排班的輔助捷徑取得
+    function getActiveRoster() {
+      let r = state.rosters.find(x => x.id === state.activeRosterId);
+      if (!r && state.rosters.length > 0) {
+        r = state.rosters[0];
+        state.activeRosterId = r.id;
+      }
+      return r;
+    }
+
+    let activeEditingDate = null;
+    let tempAvatarBase64 = '';
+    let currentFileHandle = null;
+    let isModifiedSinceLastDiskSave = false;
+
+    // Toast Notice
+    function showToast(msg, icon = '💾') {
+      const toast = document.getElementById('toastNotice');
+      const msgElem = document.getElementById('toastMsg');
+      const iconElem = document.getElementById('toastIcon');
+      if (!toast) return;
+      msgElem.innerText = msg;
+      iconElem.innerText = icon;
+      toast.classList.add('show');
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 3000);
+    }
+
+    // Update File Save Status
+    function updateFileStatus(isSaved) {
+      isModifiedSinceLastDiskSave = !isSaved;
+      const badge = document.getElementById('fileStatusBadge');
+      const dot = document.getElementById('statusDot');
+      const text = document.getElementById('fileStatusText');
+      if (!badge || !text) return;
+      if (isSaved) {
+        badge.className = 'status-badge status-saved';
+        dot.innerText = '●';
+        text.innerText = '已覆蓋至檔案';
+      } else {
+        badge.className = 'status-badge status-unsaved';
+        dot.innerText = '●';
+        text.innerText = '尚未寫入檔案';
+      }
+    }
+
+    // Multi-Roster Management
+    function renderRosterSelect() {
+      const select = document.getElementById('rosterSelect');
+      select.innerHTML = '';
+      state.rosters.forEach(r => {
+        const opt = document.createElement('option');
+        opt.value = r.id;
+        opt.innerText = r.name;
+        if (r.id === state.activeRosterId) opt.selected = true;
+        select.appendChild(opt);
+      });
+    }
+
+    function onRosterChange(newId) {
+      const cur = getActiveRoster();
+      if (cur) {
+        cur.title = document.getElementById('rosterTitleInput').value;
+        cur.timeSlot = document.getElementById('timeSlotInput').value;
+        cur.footnote = document.getElementById('footnoteInput').value;
+        cur.month = parseInt(document.getElementById('monthSelect').value, 10);
+        cur.persons = JSON.parse(JSON.stringify(state.persons)); // 儲存該排班目前的幹部名單
+      }
+      state.activeRosterId = newId;
+      const next = getActiveRoster();
+      if (next) {
+        // 切換為新排班專屬的幹部名單！
+        if (next.persons && Array.isArray(next.persons)) {
+          state.persons = JSON.parse(JSON.stringify(next.persons));
+        } else {
+          state.persons = JSON.parse(JSON.stringify(initialCadres));
+          next.persons = JSON.parse(JSON.stringify(state.persons));
+        }
+      }
+      applyActiveRosterToUI();
+      renderPersonnelList();
+      renderRosterTable();
+      saveState();
+    }
+
+    function createRoster() {
+      const name = prompt('請輸入新排班名稱（例如：假日輪值、查房值班）：');
+      if (!name || !name.trim()) return;
+      const cur = getActiveRoster();
+      if (cur) {
+        cur.persons = JSON.parse(JSON.stringify(state.persons));
+      }
+      
+      const copyCadres = confirm(`是否要將目前的幹部名單沿用至新排班「${name.trim()}」？\n\n【確定】：沿用目前名單\n【取消】：建立全新空白名單（可隨後批次匯入專屬幹部）`);
+      const newCadres = copyCadres ? JSON.parse(JSON.stringify(state.persons)) : [];
+
+      const newId = 'roster_' + Date.now();
+      const newRoster = {
+        id: newId,
+        name: name.trim(),
+        title: name.trim() + '表',
+        timeSlot: cur ? cur.timeSlot : '18:00-21:00',
+        footnote: cur ? cur.footnote : '',
+        month: cur ? cur.month : (new Date().getMonth() + 1),
+        persons: newCadres,
+        schedule: {}
+      };
+      state.rosters.push(newRoster);
+      state.activeRosterId = newId;
+      state.persons = JSON.parse(JSON.stringify(newCadres));
+      renderRosterSelect();
+      applyActiveRosterToUI();
+      renderPersonnelList();
+      renderRosterTable();
+      saveState();
+      showToast('已建立新排班：' + name.trim(), '➕');
+    }
+
+    function renameRoster() {
+      const cur = getActiveRoster();
+      if (!cur) return;
+      const name = prompt('請輸入排班表新名稱：', cur.name);
+      if (!name || !name.trim()) return;
+      cur.name = name.trim();
+      renderRosterSelect();
+      saveState();
+      showToast('已更名為：' + cur.name, '✏️');
+    }
+
+    function deleteRoster() {
+      if (state.rosters.length <= 1) {
+        alert('至少需保留一個排班表！');
+        return;
+      }
+      const cur = getActiveRoster();
+      if (!confirm(`確認要刪除排班表「${cur.name}」嗎？此排班內的所有日期資料將被移除。`)) return;
+      state.rosters = state.rosters.filter(x => x.id !== cur.id);
+      state.activeRosterId = state.rosters[0].id;
+      renderRosterSelect();
+      applyActiveRosterToUI();
+      renderPersonnelList();
+      renderRosterTable();
+      saveState();
+      showToast('已刪除排班表', '🗑️');
+    }
+
+    function applyActiveRosterToUI() {
+      const cur = getActiveRoster();
+      if (!cur) return;
+      document.getElementById('monthSelect').value = String(cur.month);
+      document.getElementById('rosterTitleInput').value = cur.title;
+      document.getElementById('displayRosterTitle').innerText = cur.title;
+      document.getElementById('timeSlotInput').value = cur.timeSlot;
+      document.getElementById('footnoteInput').value = cur.footnote;
+      document.getElementById('displayFootnote').innerText = cur.footnote;
+    }
+
+    // Toggle Cadre auto-schedule participate
+    function toggleAutoSchedule(personId, isChecked) {
+      const p = state.persons.find(x => x.id === personId);
+      if (!p) return;
+      p.autoSchedule = isChecked;
+      saveState();
+      showToast(`${p.name} ${isChecked ? '已加入' : '已排除'}自動排班`, isChecked ? '✅' : '⏸️');
+    }
+
+    // Batch Import Cadres (Excel column copy-paste)
+    function openBatchImportModal() {
+      document.getElementById('batchImportText').value = '';
+      document.getElementById('batchImportModal').classList.add('show');
+    }
+
+    function closeBatchImportModal() {
+      document.getElementById('batchImportModal').classList.remove('show');
+    }
+
+    const defaultColorPalette = ['#9333ea', '#0284c7', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#6366f1', '#14b8a6', '#8b5cf6', '#d97706'];
+
+    function submitBatchImport() {
+      const text = document.getElementById('batchImportText').value;
+      if (!text || !text.trim()) {
+        alert('請先貼上姓名名單！');
+        return;
+      }
+      const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
+      if (lines.length === 0) return;
+
+      let addedCount = 0;
+      lines.forEach((name, idx) => {
+        // 檢查是否已存在同名幹部
+        const exists = state.persons.some(p => p.name === name);
+        if (!exists) {
+          const color = defaultColorPalette[(state.persons.length + addedCount) % defaultColorPalette.length];
+          state.persons.push({
+            id: 'p_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+            name: name,
+            color: color,
+            avatar: '',
+            avail: [1, 2, 3, 4, 5],
+            autoSchedule: true
+          });
+          addedCount++;
+        }
+      });
+
+            const cur = getActiveRoster();
+      if (cur) cur.persons = JSON.parse(JSON.stringify(state.persons));
+      saveState();
+      renderPersonnelList();
+      renderRosterTable();
+      closeBatchImportModal();
+      showToast(`成功匯入 ${addedCount} 位幹部！`, '📋');
+    }
+
+    function clearAllPersons() {
+      if (!confirm('確認要清空「全部幹部名單」嗎？\n此動作將移除所有人員，現有排班人員將變為未指派。')) return;
+      state.persons = [];
+      const cur = getActiveRoster();
+      if (cur) cur.persons = [];
+      if (cur && cur.schedule) {
+        for (const k in cur.schedule) {
+          if (cur.schedule[k].dutyPersonId) cur.schedule[k].dutyPersonId = null;
+        }
+      }
+      saveState();
+      renderPersonnelList();
+      renderRosterTable();
+      showToast('已清空幹部名單', '🗑️');
+    }
+
+    // Cloud Storage Modal & Sync
+    function openCloudConfigModal() {
+      document.getElementById('cloudApiUrlInput').value = state.cloudApiUrl || 'https://script.google.com/macros/s/AKfycbx2lIE11_0b0EFIFw1gJobKuLzlglnvevf8bsGW3ccu722FcANpsP3xLNP0AdhOWfr5/exec';
+      document.getElementById('cloudPasswordInput').value = state.cloudPassword || '';
+      document.getElementById('cloudConfigModal').classList.add('show');
+    }
+
+    function closeCloudConfigModal() {
+      document.getElementById('cloudConfigModal').classList.remove('show');
+    }
+
+    function saveCloudConfig() {
+      state.cloudApiUrl = document.getElementById('cloudApiUrlInput').value.trim();
+      state.cloudPassword = document.getElementById('cloudPasswordInput').value.trim();
+      saveState();
+      closeCloudConfigModal();
+      showToast('已儲存雲端設定', '⚙️');
+    }
+
+    async function syncToCloud() {
+      if (!state.cloudApiUrl) {
+        openCloudConfigModal();
+        return;
+      }
+      if (state.cloudApiUrl.includes('/edit')) {
+        alert('⚠️ 雲端網址填寫錯誤！\n您填入的是 Apps Script 編輯器網址，必須填入點擊「部署」後產生的「網頁應用程式網址」（結尾為 /exec）。\n\n請點選「⚙️ 雲端設定」重新修改。');
+        openCloudConfigModal();
+        return;
+      }
+
+      const cur = getActiveRoster();
+      if (cur) {
+        cur.persons = JSON.parse(JSON.stringify(state.persons));
+        cur.title = document.getElementById('rosterTitleInput').value;
+        cur.timeSlot = document.getElementById('timeSlotInput').value;
+        cur.footnote = document.getElementById('footnoteInput').value;
+        cur.month = parseInt(document.getElementById('monthSelect').value, 10);
+      }
+
+      showToast('正在同步至 Google 試算表...', '⏳');
+      try {
+        const payload = {
+          password: state.cloudPassword,
+          data: state
+        };
+        const res = await fetch(state.cloudApiUrl, {
+          method: 'POST',
+          body: JSON.stringify(payload)
+        });
+        const json = await res.json();
+        if (json.status === 'success') {
+          showToast('🎉 已成功同步至雲端試算表！', '☁️');
+          alert('🎉 雲端同步成功！\n已成功將所有排班資料與幹部名單同步至 Google 試算表，並已為您自動更新/建立所有排班工作表！');
+        } else {
+          alert('同步失敗: ' + (json.message || '未知錯誤'));
+        }
+      } catch (err) {
+        alert('連線雲端失敗: ' + err + '\n\n請確認：\n1. 部署作業中的「誰可以存取」是否選為「所有人 (Anyone)」\n2. 網址結尾是否為 /exec\n3. 是否已將最新的後端程式碼貼入並重新部署。');
+      }
+    }
+
+    async function testCloudConnection() {
+      const url = document.getElementById('cloudApiUrlInput').value.trim();
+      if (!url) {
+        alert('請先填入 Web App 網址！');
+        return;
+      }
+      if (url.includes('/edit')) {
+        alert('⚠️ 網址填寫錯誤！\n您填入的是 Apps Script 編輯器網址，必須是點擊「部署」後產生的「網頁應用程式網址」（結尾為 /exec）。');
+        return;
+      }
+      showToast('正在測試連線...', '⏳');
+      try {
+        const res = await fetch(url);
+        const json = await res.json();
+        alert('✅ 連線測試成功！\n成功連線至 Google 試算表後端 API。');
+      } catch (err) {
+        alert('❌ 連線失敗: ' + err + '\n\n可能原因：\n1. 部署作業中的「誰可以存取」未設定為「所有人 (Anyone)」\n2. 網址不正確（需為 /exec 結尾）');
+      }
+    }
+
+    async function loadFromCloud() {
+      if (!state.cloudApiUrl) {
+        openCloudConfigModal();
+        return;
+      }
+      if (!confirm('確認要從雲端下載最新排班並覆蓋目前畫面嗎？')) return;
+      showToast('正在讀取雲端...', '⏳');
+      try {
+        const res = await fetch(state.cloudApiUrl);
+        const json = await res.json();
+        if (json && (json.persons || json.rosters)) {
+          if (json.persons) state.persons = json.persons;
+          if (json.rosters) state.rosters = json.rosters;
+          if (json.activeRosterId) state.activeRosterId = json.activeRosterId;
+          renderRosterSelect();
+          applyActiveRosterToUI();
+          renderPersonnelList();
+          renderRosterTable();
+          saveState();
+          showToast('🎉 已成功從雲端載入最新排班！', '📥');
+        } else {
+          alert('雲端資料庫目前為空或格式不符。');
+        }
+      } catch (err) {
+        alert('讀取雲端失敗: ' + err);
+      }
+    }
+
+    // Generate Full HTML with Current State baked in
+    function generateBakedHtml() {
+      let docClone = document.documentElement.cloneNode(true);
+      
+      const modalBackdrops = docClone.querySelectorAll('.modal-backdrop');
+      modalBackdrops.forEach(m => m.classList.remove('show'));
+      const toast = docClone.querySelector('.toast-notice');
+      if (toast) toast.classList.remove('show');
+
+      const cur = getActiveRoster();
+      if (cur) {
+        const rosterTitleEl = docClone.querySelector('#rosterTitleInput');
+        if (rosterTitleEl) rosterTitleEl.setAttribute('value', cur.title);
+
+        const timeSlotEl = docClone.querySelector('#timeSlotInput');
+        if (timeSlotEl) timeSlotEl.setAttribute('value', cur.timeSlot);
+
+        const footnoteEl = docClone.querySelector('#footnoteInput');
+        if (footnoteEl) footnoteEl.setAttribute('value', cur.footnote);
+
+        const titleDisplayEl = docClone.querySelector('#displayRosterTitle');
+        if (titleDisplayEl) titleDisplayEl.innerText = cur.title;
+
+        const footnoteDisplayEl = docClone.querySelector('#displayFootnote');
+        if (footnoteDisplayEl) footnoteDisplayEl.innerText = cur.footnote;
+
+        const monthOptions = docClone.querySelectorAll('#monthSelect option');
+        monthOptions.forEach(opt => {
+          if (opt.value === String(cur.month)) {
+            opt.setAttribute('selected', 'selected');
+          } else {
+            opt.removeAttribute('selected');
+          }
+        });
+      }
+
+      let htmlContent = '<!DOCTYPE html>\n<html lang="zh-TW">\n' + docClone.innerHTML + '\n</html>';
+
+      const now = new Date();
+      const timeStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
+      const saveTimestamp = Date.now();
+
+      state.fileSavedTime = saveTimestamp;
+      state.fileSavedAt = timeStr;
+
+      const cadresJson = JSON.stringify(state.persons, null, 6);
+      const rostersJson = JSON.stringify(state.rosters, null, 6);
+      const currentConfig = {
+        year: state.year,
+        activeRosterId: state.activeRosterId,
+        displayMode: state.displayMode,
+        cloudApiUrl: state.cloudApiUrl || 'https://script.google.com/macros/s/AKfycbx2lIE11_0b0EFIFw1gJobKuLzlglnvevf8bsGW3ccu722FcANpsP3xLNP0AdhOWfr5/exec',
+        cloudPassword: state.cloudPassword || '',
+        fileSavedTime: saveTimestamp,
+        fileSavedAt: timeStr
+      };
+      const configJson = JSON.stringify(currentConfig, null, 6);
+
+      htmlContent = htmlContent.replace(
+        /const initialCadres = \[[\s\S]*?\];/,
+        `const initialCadres = ${cadresJson};`
+      );
+
+      htmlContent = htmlContent.replace(
+        /const initialRosters = \[[\s\S]*?\];/,
+        `const initialRosters = ${rostersJson};`
+      );
+
+      htmlContent = htmlContent.replace(
+        /const initialConfig = \{[\s\S]*?\};/,
+        `const initialConfig = ${configJson};`
+      );
+
+      return htmlContent;
+    }
+
+    // File System Access API
+    async function openAndLinkLocalFile() {
+      if (!('showOpenFilePicker' in window)) {
+        alert('您的瀏覽器不支援本機直接存取 API，建議使用 Chrome 或 Edge 即可享受直接覆蓋功能！');
+        return;
+      }
+      try {
+        const [handle] = await window.showOpenFilePicker({
+          types: [{
+            description: 'HTML 網頁檔案',
+            accept: { 'text/html': ['.html', '.htm'] }
+          }],
+          multiple: false
+        });
+        currentFileHandle = handle;
+        const file = await handle.getFile();
+        document.getElementById('linkedFileNameText').innerText = `已綁定：${file.name}`;
+        showToast(`已成功連結：${file.name}`, '📂');
+      } catch (err) {
+        if (err.name !== 'AbortError') console.error(err);
+      }
+    }
+
+    async function saveDirectlyToDisk() {
+      // 存檔前同步當前畫面的設定至 active roster
+      const cur = getActiveRoster();
+      if (cur) {
+        cur.title = document.getElementById('rosterTitleInput').value;
+        cur.timeSlot = document.getElementById('timeSlotInput').value;
+        cur.footnote = document.getElementById('footnoteInput').value;
+        cur.month = parseInt(document.getElementById('monthSelect').value, 10);
+      }
+
+      const fullHtml = generateBakedHtml();
+
+      if (currentFileHandle) {
+        try {
+          if (await verifyPermission(currentFileHandle, true)) {
+            const writable = await currentFileHandle.createWritable();
+            await writable.write(fullHtml);
+            await writable.close();
+            updateFileStatus(true);
+            showToast(`已覆蓋寫入：${currentFileHandle.name}！`, '✅');
+            return;
+          }
+        } catch (err) {
+          console.warn('使用現有 Handle 覆寫失敗，嘗試重新選擇：', err);
+        }
+      }
+
+      if ('showSaveFilePicker' in window) {
+        try {
+          const options = {
+            suggestedName: '資訊組電算排班系統.html',
+            types: [{
+              description: 'HTML 網頁檔案',
+              accept: { 'text/html': ['.html', '.htm'] }
+            }]
+          };
+          const handle = await window.showSaveFilePicker(options);
+          const writable = await handle.createWritable();
+          await writable.write(fullHtml);
+          await writable.close();
+          currentFileHandle = handle;
+          document.getElementById('linkedFileNameText').innerText = `已綁定：${handle.name}`;
+          updateFileStatus(true);
+          showToast(`已成功覆蓋寫入 ${handle.name}！`, '🎉');
+          return;
+        } catch (err) {
+          if (err.name === 'AbortError') return;
+          console.warn('showSaveFilePicker 失敗，改用下載方式：', err);
+        }
+      }
+
+      // Fallback download
+      const blob = new Blob([fullHtml], { type: 'text/html;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = '資訊組電算排班系統.html';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      updateFileStatus(true);
+      showToast('已下載最新檔案，請取代原檔案！', '💾');
+    }
+
+    async function verifyPermission(fileHandle, readWrite) {
+      const options = {};
+      if (readWrite) options.mode = 'readwrite';
+      if ((await fileHandle.queryPermission(options)) === 'granted') return true;
+      if ((await fileHandle.requestPermission(options)) === 'granted') return true;
+      return false;
+    }
+
+    // Avatar Badge
+    function getPersonAvatarBadge(person, size = 30) {
+      if (person.avatar) {
+        return `<img src="${person.avatar}" class="duty-avatar-img" style="width: ${size}px; height: ${size}px;" alt="${person.name}">`;
+      }
+      const initial = (person.name && person.name.trim().length > 0) ? person.name.trim()[0] : '幹';
+      const color = person.color || '#2563eb';
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 32 32">
+        <circle cx="16" cy="16" r="15" fill="${color}" stroke="#0f172a" stroke-width="1.2"/>
+        <text x="16" y="21.5" font-family="-apple-system, BlinkMacSystemFont, 'Noto Sans TC', sans-serif" font-size="16" font-weight="900" fill="#ffffff" text-anchor="middle">${initial}</text>
+      </svg>`;
+      const svgDataUrl = 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
+      return `<img src="${svgDataUrl}" class="duty-avatar-img" style="width: ${size}px; height: ${size}px; border: none; border-radius: 50%;" alt="${person.name}">`;
+    }
+
+    // Init Date
+    function initOnlineDate() {
+      const now = new Date();
+      const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
+      const currentYear = now.getFullYear();
+      const currentMonth = now.getMonth() + 1;
+      const currentDate = now.getDate();
+      const dateStr = `${currentYear}年${currentMonth}月${currentDate}日 星期${weekdays[now.getDay()]}`;
+      const elem = document.getElementById('networkDateDisplay');
+      if (elem) elem.innerText = `連線同步今日：${dateStr}`;
+      return { year: currentYear, month: currentMonth, date: currentDate };
+    }
+
+    // Smart Load State (File-first priority)
+    function loadState() {
+      if (typeof initialConfig === 'object') Object.assign(state, initialConfig);
+      if (Array.isArray(initialRosters)) state.rosters = JSON.parse(JSON.stringify(initialRosters));
+      const curActive = getActiveRoster();
+      if (curActive && Array.isArray(curActive.persons)) {
+        state.persons = JSON.parse(JSON.stringify(curActive.persons));
+      } else if (Array.isArray(initialCadres)) {
+        state.persons = JSON.parse(JSON.stringify(initialCadres));
+        if (curActive) curActive.persons = JSON.parse(JSON.stringify(state.persons));
+      }
+
+      const saved = localStorage.getItem('chin_yi_schedule_state_v4');
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          const localSavedTime = parsed.fileSavedTime || 0;
+          const fileSavedTime = (typeof initialConfig === 'object' && initialConfig.fileSavedTime) || 0;
+
+          if (fileSavedTime >= localSavedTime) {
+            localStorage.setItem('chin_yi_schedule_state_v4', JSON.stringify(state));
+            return;
+          }
+
+          if (localSavedTime > fileSavedTime + 2000) {
+            showDraftRecoveryBanner(parsed);
+          }
+        } catch(e) {
+          console.error(e);
+        }
+      } else {
+        localStorage.setItem('chin_yi_schedule_state_v4', JSON.stringify(state));
+      }
+    }
+
+    function showDraftRecoveryBanner(draftData) {
+      const banner = document.getElementById('draftRecoveryBanner');
+      const timeElem = document.getElementById('draftTimeText');
+      if (!banner || !timeElem) return;
+      timeElem.innerText = draftData.fileSavedAt || '稍早編輯';
+      banner.style.display = 'flex';
+    }
+
+    function applyDraft() {
+      const saved = localStorage.getItem('chin_yi_schedule_state_v4');
+      if (!saved) return;
+      try {
+        const parsed = JSON.parse(saved);
+        if (parsed.rosters) state.rosters = parsed.rosters;
+        if (parsed.activeRosterId) state.activeRosterId = parsed.activeRosterId;
+        const curDraft = getActiveRoster();
+        if (curDraft && Array.isArray(curDraft.persons)) {
+          state.persons = JSON.parse(JSON.stringify(curDraft.persons));
+        } else if (parsed.persons) {
+          state.persons = parsed.persons;
+        }
+        renderRosterSelect();
+        applyActiveRosterToUI();
+        renderPersonnelList();
+        renderRosterTable();
+        updateFileStatus(false);
+        dismissDraftBanner(false);
+        showToast('已還原本機草稿', '📝');
+      } catch(e) {
+        console.error(e);
+      }
+    }
+
+    function dismissDraftBanner(discard = false) {
+      const banner = document.getElementById('draftRecoveryBanner');
+      if (banner) banner.style.display = 'none';
+      if (discard) {
+        localStorage.setItem('chin_yi_schedule_state_v4', JSON.stringify(state));
+        showToast('已捨棄本機舊暫存', '🧹');
+      }
+    }
+
+    function clearLocalCache() {
+      if (!confirm('確認要清除這台電腦上的暫存嗎？\n清除後將強制重新讀取本 HTML 檔案最後儲存的內容。')) return;
+      localStorage.removeItem('chin_yi_schedule_state_v4');
+      localStorage.removeItem('chin_yi_schedule_state_v3');
+      localStorage.removeItem('chin_yi_schedule_state_v2');
+      localStorage.removeItem('chin_yi_schedule_state');
+      location.reload();
+    }
+
+    function saveState() {
+      try {
+        localStorage.setItem('chin_yi_schedule_state_v4', JSON.stringify(state));
+        updateFileStatus(false);
+      } catch(e) {
+        console.warn('LocalStorage save failed:', e);
+      }
+    }
+
+    // Shift counts for CURRENT month in ACTIVE roster
+    function getPersonShiftCounts() {
+      const counts = {};
+      state.persons.forEach(p => counts[p.id] = 0);
+      const cur = getActiveRoster();
+      if (!cur || !cur.schedule) return counts;
+
+      const prefix = `${state.year}-${String(cur.month).padStart(2, '0')}-`;
+      for (const date in cur.schedule) {
+        if (date.startsWith(prefix)) {
+          const item = cur.schedule[date];
+          if (item && item.dutyPersonId && !item.slash) {
+            counts[item.dutyPersonId] = (counts[item.dutyPersonId] || 0) + 1;
+          }
+        }
+      }
+      return counts;
+    }
+
+    // Render Personnel List
+    function renderPersonnelList() {
+      const container = document.getElementById('personListContainer');
+      const counts = getPersonShiftCounts();
+      const cur = getActiveRoster();
+      const curMonth = cur ? cur.month : 10;
+      container.innerHTML = '';
+      
+      if (state.persons.length === 0) {
+        container.innerHTML = `
+          <div style="text-align:center; padding:1.25rem; background:#f8fafc; border:1px dashed #cbd5e1; border-radius:0.5rem; color:#64748b; font-size:0.85rem;">
+            目前尚無幹部名單<br>點選上方<strong>「📋 批次匯入」</strong>或<strong>「+ 新增」</strong>加入！
+          </div>
+        `;
+        return;
+      }
+
+      state.persons.forEach((person) => {
+        const shiftCount = counts[person.id] || 0;
+        const item = document.createElement('div');
+        item.className = 'person-item';
+        const dayLabels = ['一', '二', '三', '四', '五'];
+        const availStr = person.avail && person.avail.length > 0 
+          ? '週' + person.avail.map(d => dayLabels[d - 1]).join('、')
+          : '未設定可用日';
+        
+        const avatarHtml = getPersonAvatarBadge(person, 30);
+        const isAutoChecked = person.autoSchedule !== false;
+
+        item.innerHTML = `
+          ${avatarHtml}
+          <div class="person-info">
+            <div class="person-name-row">
+              <span class="person-color-dot" style="background-color: ${person.color}"></span>
+              <span class="person-name" title="${person.name}">${person.name}</span>
+              <span class="person-shifts-badge">${curMonth}月: ${shiftCount} 天</span>
+            </div>
+            <div class="person-days-tag">${availStr}</div>
+          </div>
+          <label class="auto-schedule-label" title="是否加入自動排班">
+            <input type="checkbox" ${isAutoChecked ? 'checked' : ''} onchange="toggleAutoSchedule('${person.id}', this.checked)">
+            <span>排班</span>
+          </label>
+          <div style="display:flex; gap:2px;">
+            <button class="btn-icon" style="color: var(--primary);" onclick="openEditPersonModal('${person.id}')" title="編輯人員與可用時間">✏️</button>
+            <button class="btn-icon" onclick="deletePerson('${person.id}')" title="刪除">🗑️</button>
+          </div>
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    // Weeks calculation
+    function getMonthWeeks(year, month) {
+      const lastDay = new Date(year, month, 0).getDate();
+      let weeks = [];
+      let currentWeek = [null, null, null, null, null];
+
+      for (let d = 1; d <= lastDay; d++) {
+        const dateObj = new Date(year, month - 1, d);
+        const dayOfWeek = dateObj.getDay();
+        if (dayOfWeek >= 1 && dayOfWeek <= 5) {
+          const slotIdx = dayOfWeek - 1;
+          const dateKey = `${year}-${String(month).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+          currentWeek[slotIdx] = {
+            day: d,
+            dateKey: dateKey,
+            dateObj: dateObj
+          };
+          if (dayOfWeek === 5 || d === lastDay) {
+            weeks.push(currentWeek);
+            currentWeek = [null, null, null, null, null];
+          }
+        }
+      }
+      while (weeks.length < 5) {
+        weeks.push([null, null, null, null, null]);
+      }
+      return weeks.slice(0, 5);
+    }
+
+    // Render Table
+    function renderRosterTable() {
+      const cur = getActiveRoster();
+      if (!cur) return;
+
+      const tbody = document.getElementById('rosterTableBody');
+      tbody.innerHTML = '';
+      const weeks = getMonthWeeks(state.year, cur.month);
+      const today = new Date();
+      const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+
+      weeks.forEach((week) => {
+        // 1. Date Row
+        const trDate = document.createElement('tr');
+        trDate.className = 'row-date';
+
+        const tdTimeHeader = document.createElement('td');
+        tdTimeHeader.innerHTML = '&nbsp;';
+        trDate.appendChild(tdTimeHeader);
+
+        for (let d = 0; d < 5; d++) {
+          const td = document.createElement('td');
+          const dayInfo = week[d];
+          if (dayInfo) {
+            td.innerText = `${cur.month}月${dayInfo.day}日`;
+            if (dayInfo.dateKey === todayKey) {
+              td.classList.add('is-today-cell');
+              td.innerHTML += `<span class="today-indicator">今日</span>`;
+            }
+          } else {
+            td.innerHTML = '&nbsp;';
+          }
+          trDate.appendChild(td);
+        }
+        tbody.appendChild(trDate);
+
+        // 2. Duty Row
+        const trDuty = document.createElement('tr');
+        trDuty.className = 'row-duty';
+
+        const tdTimeSlot = document.createElement('td');
+        tdTimeSlot.className = 'time-slot-cell';
+        tdTimeSlot.innerText = cur.timeSlot || '18:00-21:00';
+        trDuty.appendChild(tdTimeSlot);
+
+        for (let d = 0; d < 5; d++) {
+          const td = document.createElement('td');
+          const dayInfo = week[d];
+
+          if (dayInfo) {
+            const dateKey = dayInfo.dateKey;
+            const item = (cur.schedule && cur.schedule[dateKey]) || { dutyPersonId: null, slash: false, note: '' };
+            td.setAttribute('data-date', dateKey);
+            td.onclick = () => openEditCellModal(dateKey, dayInfo.day, d + 1);
+
+            if (item.slash) {
+              td.classList.add('slash-cell');
+              td.innerHTML = '&nbsp;';
+            } else if (item.dutyPersonId) {
+              const person = state.persons.find(p => p.id === item.dutyPersonId);
+              if (person) {
+                let contentHtml = '';
+                if (state.displayMode === 'text') {
+                  contentHtml = `<div class="duty-name">${person.name}</div>`;
+                } else if (state.displayMode === 'color') {
+                  contentHtml = `
+                    <div style="background-color: ${person.color}25; border: 2px solid ${person.color}; border-radius: 4px; padding: 2px 8px; display: inline-block;">
+                      <span class="duty-name" style="color: ${person.color}; font-weight: 900;">${person.name}</span>
+                    </div>
+                  `;
+                } else if (state.displayMode === 'avatar') {
+                  contentHtml = `
+                    <div class="duty-cell-content">
+                      ${getPersonAvatarBadge(person, 30)}
+                      <span class="duty-name" style="font-size: 11pt;">${person.name}</span>
+                    </div>
+                  `;
+                } else if (state.displayMode === 'only_color_avatar') {
+                  contentHtml = `
+                    <div class="duty-cell-content">
+                      ${getPersonAvatarBadge(person, 36)}
+                    </div>
+                  `;
+                }
+                td.innerHTML = contentHtml;
+              } else {
+                td.innerHTML = `<span class="duty-cell-empty no-print">未指派</span><span class="print-spacer" style="display:none;">&nbsp;</span>`;
+              }
+            } else {
+              td.innerHTML = `<span class="duty-cell-empty no-print">未排班</span><span class="print-spacer" style="display:none;">&nbsp;</span>`;
+            }
+          } else {
+            td.innerHTML = '&nbsp;';
+          }
+          trDuty.appendChild(td);
+        }
+        tbody.appendChild(trDuty);
+
+        // 3. Signature Row
+        const trSig = document.createElement('tr');
+        trSig.className = 'row-signature';
+
+        const tdSigEmpty = document.createElement('td');
+        tdSigEmpty.innerHTML = '&nbsp;';
+        trSig.appendChild(tdSigEmpty);
+
+        for (let d = 0; d < 5; d++) {
+          const td = document.createElement('td');
+          const dayInfo = week[d];
+          if (dayInfo) {
+            const dateKey = dayInfo.dateKey;
+            const item = cur.schedule && cur.schedule[dateKey];
+            if (item && item.note && item.note.trim()) {
+              td.innerHTML = `<span class="duty-note-text">${item.note.trim()}</span>`;
+            } else {
+              td.innerHTML = '&nbsp;';
+            }
+          } else {
+            td.innerHTML = '&nbsp;';
+          }
+          trSig.appendChild(td);
+        }
+        tbody.appendChild(trSig);
+      });
+
+      renderPersonnelList();
+    }
+
+    // Modal Operations
+    function openEditCellModal(dateKey, dayNum, weekdayNum) {
+      activeEditingDate = dateKey;
+      const cur = getActiveRoster();
+      const weekdays = ['', '週一', '週二', '週三', '週四', '週五'];
+      document.getElementById('modalDateTitle').innerText = `${cur.month}月${dayNum}日 (${weekdays[weekdayNum]}) 排班設定`;
+
+      const item = (cur.schedule && cur.schedule[dateKey]) || { dutyPersonId: null, slash: false, note: '' };
+      const select = document.getElementById('modalPersonSelect');
+      select.innerHTML = '<option value="">-- 選擇值班人員 --</option>';
+
+      if (state.persons.length === 0) {
+        const opt = document.createElement('option');
+        opt.value = "";
+        opt.disabled = true;
+        opt.innerText = "尚未建立幹部名單，請先新增！";
+        select.appendChild(opt);
+      } else {
+        const counts = getPersonShiftCounts();
+        state.persons.forEach(p => {
+          const canWorkToday = p.avail.includes(weekdayNum);
+          const shiftCount = counts[p.id] || 0;
+          const tag = canWorkToday ? `[可值班 - ${cur.month}月 ${shiftCount} 天]` : `[不可值班 - ${cur.month}月 ${shiftCount} 天]`;
+          const opt = document.createElement('option');
+          opt.value = p.id;
+          opt.innerText = `${p.name} ${tag}`;
+          if (!canWorkToday) opt.style.color = '#94a3b8';
+          if (item.dutyPersonId === p.id && !item.slash) opt.selected = true;
+          select.appendChild(opt);
+        });
+      }
+
+      document.getElementById('modalNoteInput').value = item.note || '';
+      document.getElementById('editCellModal').classList.add('show');
+    }
+
+    function closeEditModal() {
+      document.getElementById('editCellModal').classList.remove('show');
+      activeEditingDate = null;
+    }
+
+    function setCellNoDuty() {
+      if (!activeEditingDate) return;
+      const cur = getActiveRoster();
+      if (!cur.schedule) cur.schedule = {};
+      cur.schedule[activeEditingDate] = {
+        dutyPersonId: null,
+        slash: true,
+        note: document.getElementById('modalNoteInput').value || ''
+      };
+      saveState();
+      renderRosterTable();
+      closeEditModal();
+    }
+
+    function setCellEmpty() {
+      if (!activeEditingDate) return;
+      const cur = getActiveRoster();
+      if (!cur.schedule) cur.schedule = {};
+      cur.schedule[activeEditingDate] = {
+        dutyPersonId: null,
+        slash: false,
+        note: document.getElementById('modalNoteInput').value || ''
+      };
+      saveState();
+      renderRosterTable();
+      closeEditModal();
+    }
+
+    function saveCellEdit() {
+      if (!activeEditingDate) return;
+      const cur = getActiveRoster();
+      if (!cur.schedule) cur.schedule = {};
+      const personId = document.getElementById('modalPersonSelect').value || null;
+      const note = document.getElementById('modalNoteInput').value || '';
+      cur.schedule[activeEditingDate] = {
+        dutyPersonId: personId,
+        slash: false,
+        note: note
+      };
+      saveState();
+      renderRosterTable();
+      closeEditModal();
+    }
+
+    // Auto Schedule: only candidates with p.autoSchedule !== false
+    function runAutoSchedule(resetAll) {
+      const activeCadres = state.persons.filter(p => p.autoSchedule !== false);
+      if (activeCadres.length === 0) {
+        alert('目前沒有勾選任何參與自動排班的幹部！請先在幹部名單勾選「排班」。');
+        return;
+      }
+      const cur = getActiveRoster();
+      if (!cur) return;
+      if (!cur.schedule) cur.schedule = {};
+
+      if (resetAll) {
+        if (!confirm(`確認要全部重新自動排班【${cur.month}月份】嗎？\n這將重新分配 ${cur.month} 月的排班。`)) return;
+      }
+
+      const weeks = getMonthWeeks(state.year, cur.month);
+      const counts = {};
+      activeCadres.forEach(p => counts[p.id] = 0);
+
+      const currentMonthPrefix = `${state.year}-${String(cur.month).padStart(2, '0')}-`;
+      if (!resetAll) {
+        for (const date in cur.schedule) {
+          if (date.startsWith(currentMonthPrefix)) {
+            const item = cur.schedule[date];
+            if (item && item.dutyPersonId && !item.slash) {
+              counts[item.dutyPersonId] = (counts[item.dutyPersonId] || 0) + 1;
+            }
+          }
+        }
+      }
+
+      const datesToSchedule = [];
+      weeks.forEach(week => {
+        week.forEach((dayInfo, weekdayIdx) => {
+          if (!dayInfo) return;
+          const dateKey = dayInfo.dateKey;
+          const currentItem = cur.schedule[dateKey] || { dutyPersonId: null, slash: false, note: '' };
+
+          if (currentItem.slash) return;
+          if (!resetAll && currentItem.dutyPersonId) return;
+
+          datesToSchedule.push({
+            dateKey: dateKey,
+            weekday: weekdayIdx + 1
+          });
+        });
+      });
+
+      if (datesToSchedule.length === 0) {
+        alert(`目前【${cur.month}月份】沒有需要排班的空白日期！若要重新分配，請點選「全部重新排班」。`);
+        return;
+      }
+
+      let lastAssignedId = null;
+      datesToSchedule.forEach(slot => {
+        let candidates = activeCadres.filter(p => p.avail.includes(slot.weekday));
+        if (candidates.length === 0) {
+          candidates = [...activeCadres];
+        }
+
+        candidates.sort((a, b) => {
+          const countA = counts[a.id] || 0;
+          const countB = counts[b.id] || 0;
+          if (countA !== countB) return countA - countB;
+          if (a.id === lastAssignedId) return 1;
+          if (b.id === lastAssignedId) return -1;
+          return 0.5 - Math.random();
+        });
+
+        const chosen = candidates[0];
+        counts[chosen.id] = (counts[chosen.id] || 0) + 1;
+        lastAssignedId = chosen.id;
+        const prevNote = (cur.schedule[slot.dateKey] && cur.schedule[slot.dateKey].note) || '';
+        cur.schedule[slot.dateKey] = {
+          dutyPersonId: chosen.id,
+          slash: false,
+          note: prevNote
+        };
+      });
+
+      saveState();
+      renderRosterTable();
+      showToast(`🎉 【${cur.month}月份】自動排班完成！已平衡天數。`, '⚡');
+    }
+
+    // Clear Month
+    function clearCurrentMonthShifts() {
+      const cur = getActiveRoster();
+      if (!cur || !cur.schedule) return;
+      if (!confirm(`確認要將【${cur.month}月份】的值班表清空為全空白嗎？`)) return;
+      const prefix = `${state.year}-${String(cur.month).padStart(2, '0')}-`;
+      for (const d in cur.schedule) {
+        if (d.startsWith(prefix)) {
+          delete cur.schedule[d];
+        }
+      }
+      saveState();
+      renderRosterTable();
+      showToast(`已清空【${cur.month}月份】排班`, '📄');
+    }
+
+    // Display mode
+    function changeDisplayMode(mode) {
+      state.displayMode = mode;
+      saveState();
+      renderRosterTable();
+    }
+
+    // Person Management
+    function openAddPersonModal() {
+      document.getElementById('personModalTitle').innerText = '新增幹部人員';
+      document.getElementById('editPersonId').value = '';
+      document.getElementById('personNameInput').value = '';
+      document.getElementById('personColorInput').value = '#10b981';
+      document.getElementById('personAvatarFile').value = '';
+      document.getElementById('personAutoScheduleModal').checked = true;
+      tempAvatarBase64 = '';
+      for (let i = 1; i <= 5; i++) {
+        document.getElementById(`avail_${i}`).checked = true;
+      }
+      document.getElementById('personModal').classList.add('show');
+    }
+
+    function openEditPersonModal(personId) {
+      const p = state.persons.find(x => x.id === personId);
+      if (!p) return;
+      document.getElementById('personModalTitle').innerText = `編輯幹部：${p.name}`;
+      document.getElementById('editPersonId').value = p.id;
+      document.getElementById('personNameInput').value = p.name;
+      document.getElementById('personColorInput').value = p.color || '#3b82f6';
+      document.getElementById('personAvatarFile').value = '';
+      document.getElementById('personAutoScheduleModal').checked = (p.autoSchedule !== false);
+      tempAvatarBase64 = p.avatar || '';
+      for (let i = 1; i <= 5; i++) {
+        document.getElementById(`avail_${i}`).checked = p.avail.includes(i);
+      }
+      document.getElementById('personModal').classList.add('show');
+    }
+
+    function closePersonModal() {
+      document.getElementById('personModal').classList.remove('show');
+      tempAvatarBase64 = '';
+    }
+
+    function handleAvatarUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        tempAvatarBase64 = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function savePerson() {
+      const name = document.getElementById('personNameInput').value.trim();
+      if (!name) {
+        alert('請填寫幹部姓名！');
+        return;
+      }
+      const color = document.getElementById('personColorInput').value;
+      const autoSched = document.getElementById('personAutoScheduleModal').checked;
+      const avail = [];
+      for (let i = 1; i <= 5; i++) {
+        if (document.getElementById(`avail_${i}`).checked) avail.push(i);
+      }
+      const editId = document.getElementById('editPersonId').value;
+      if (editId) {
+        const p = state.persons.find(x => x.id === editId);
+        if (p) {
+          p.name = name;
+          p.color = color;
+          p.avail = avail;
+          p.autoSchedule = autoSched;
+          if (tempAvatarBase64) p.avatar = tempAvatarBase64;
+        }
+      } else {
+        const newId = 'p_' + Date.now();
+        state.persons.push({
+          id: newId,
+          name: name,
+          color: color,
+          avatar: tempAvatarBase64,
+          avail: avail,
+          autoSchedule: autoSched
+        });
+      }
+            const cur = getActiveRoster();
+      if (cur) cur.persons = JSON.parse(JSON.stringify(state.persons));
+      saveState();
+      renderPersonnelList();
+      renderRosterTable();
+      closePersonModal();
+      showToast('幹部名單已更新', '👥');
+    }
+
+    function deletePerson(personId) {
+      const p = state.persons.find(x => x.id === personId);
+      if (!p) return;
+      if (!confirm(`確認要刪除幹部「${p.name}」嗎？已排班的該人員班次將變為未指派。`)) return;
+      state.persons = state.persons.filter(x => x.id !== personId);
+      state.rosters.forEach(r => {
+        if (r.schedule) {
+          for (const d in r.schedule) {
+            if (r.schedule[d] && r.schedule[d].dutyPersonId === personId) {
+              r.schedule[d].dutyPersonId = null;
+            }
+          }
+        }
+      });
+      saveState();
+      renderPersonnelList();
+      renderRosterTable();
+      showToast('已刪除幹部', '🗑️');
+    }
+
+    // Input listeners
+    document.getElementById('rosterTitleInput').addEventListener('input', (e) => {
+      const cur = getActiveRoster();
+      if (cur) cur.title = e.target.value;
+      document.getElementById('displayRosterTitle').innerText = e.target.value;
+      saveState();
+    });
+
+    document.getElementById('timeSlotInput').addEventListener('input', (e) => {
+      const cur = getActiveRoster();
+      if (cur) cur.timeSlot = e.target.value;
+      saveState();
+      renderRosterTable();
+    });
+
+    document.getElementById('footnoteInput').addEventListener('input', (e) => {
+      const cur = getActiveRoster();
+      if (cur) cur.footnote = e.target.value;
+      document.getElementById('displayFootnote').innerText = e.target.value;
+      saveState();
+    });
+
+    // Month Selector Listener
+    document.getElementById('monthSelect').addEventListener('change', (e) => {
+      const newMonth = parseInt(e.target.value, 10);
+      const cur = getActiveRoster();
+      if (cur) {
+        cur.month = newMonth;
+        // 智慧替換標題中的月份文字（如：九月份 -> 十月份）
+        const monthChinese = ['', '一', '二', '三', '四', '五', '六', '七', '八', '九', '十', '十一', '十二'];
+        cur.title = cur.title.replace(/[一二三四五六七八九十兩0-9]+月份/, monthChinese[newMonth] + '月份');
+        document.getElementById('rosterTitleInput').value = cur.title;
+        document.getElementById('displayRosterTitle').innerText = cur.title;
+      }
+      saveState();
+      renderPersonnelList();
+      renderRosterTable();
+    });
+
+    // App Initialization
+    window.addEventListener('DOMContentLoaded', () => {
+      initOnlineDate();
+      loadState();
+
+      const cur = getActiveRoster();
+      if (cur && Array.isArray(cur.persons)) {
+        state.persons = JSON.parse(JSON.stringify(cur.persons));
+      } else if (cur) {
+        cur.persons = JSON.parse(JSON.stringify(state.persons));
+      }
+
+      renderRosterSelect();
+      applyActiveRosterToUI();
+
+      const radio = document.querySelector(`input[name="displayMode"][value="${state.displayMode}"]`);
+      if (radio) radio.checked = true;
+
+      renderPersonnelList();
+      renderRosterTable();
+      updateFileStatus(true);
+    });
+  </script>
+</body>
+</html>
