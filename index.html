@@ -1107,14 +1107,31 @@
           <label>姓名：</label>
           <input type="text" id="personNameInput" class="form-control" placeholder="例：吳明傑">
         </div>
-        <div class="form-row">
-          <div class="form-group">
+        <div class="form-row" style="align-items: center; margin-bottom: 0.75rem;">
+          <div class="form-group" style="flex: 1;">
             <label>個人代表顏色：</label>
-            <input type="color" id="personColorInput" class="form-control" style="height: 38px; padding: 2px;" value="#10b981">
+            <input type="color" id="personColorInput" class="form-control" style="height: 40px; padding: 2px;" value="#10b981">
           </div>
-          <div class="form-group">
-            <label>照片頭像上傳：</label>
-            <input type="file" id="personAvatarFile" class="form-control" accept="image/*" onchange="handleAvatarUpload(event)">
+          <div class="form-group" style="flex: 1; text-align: center;">
+            <label>頭像即時預覽：</label>
+            <div style="display: flex; align-items: center; justify-content: center; gap: 0.6rem; height: 40px;">
+              <div id="modalAvatarPreview" style="display: inline-flex; align-items: center; justify-content: center;"></div>
+              <button type="button" class="btn btn-outline" style="padding: 2px 8px; font-size: 0.75rem; width: auto; color: #ef4444; border-color: #fca5a5;" onclick="clearPersonAvatar()" title="清除照片並還原為文字代表色圓圈">❌ 移除照片</button>
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label style="display: flex; justify-content: space-between; align-items: center;">
+            <span>頭像照片設定：</span>
+            <span id="avatarSizeTip" style="font-size: 0.75rem; color: #10b981; font-weight: 600;"></span>
+          </label>
+          <input type="file" id="personAvatarFile" class="form-control" accept="image/*" onchange="handleAvatarUpload(event)">
+          <div style="margin-top: 0.35rem; display: flex; align-items: center; gap: 0.4rem;">
+            <span style="font-size: 0.8rem; color: #64748b; white-space: nowrap;">或圖片網址：</span>
+            <input type="url" id="personAvatarUrlInput" class="form-control" placeholder="https://... 外部圖片網址 (可選)" style="font-size: 0.82rem; padding: 4px 8px;" oninput="handleAvatarUrlInput(this.value)">
+          </div>
+          <div style="font-size: 0.72rem; color: #64748b; margin-top: 0.3rem;">
+            💡 系統會<b>自動等比裁切並智慧壓縮為 80x80 高清圓形縮圖 (約 2KB)</b>，徹底解決原本大圖卡死無法儲存的問題！
           </div>
         </div>
         <div class="form-group">
@@ -1574,10 +1591,13 @@
         cur.month = parseInt(document.getElementById('monthSelect').value, 10);
       }
 
-      updateCloudStatus(false, '雲端連線：正在發布...');
-      showToast('正在發布至 Google 試算表...', '⏳');
+      updateCloudStatus(false, '雲端連線：正在最佳化發布...');
+      showToast('正在最佳化並發布至雲端...', '⏳');
 
       try {
+        // 發布前自動進行瘦身檢查與壓縮，確保不超過試算表限制
+        await ensureAllAvatarsOptimized();
+
         const payload = {
           password: state.cloudPassword,
           data: {
@@ -1588,9 +1608,12 @@
             persons: state.persons
           }
         };
+        const payloadStr = JSON.stringify(payload);
+        console.log(`發布中，資料大小: ${(payloadStr.length / 1024).toFixed(1)} KB (字元數: ${payloadStr.length})`);
+
         const res = await fetch(CLOUD_API_URL, {
           method: 'POST',
-          body: JSON.stringify(payload)
+          body: payloadStr
         });
         const json = await res.json();
         if (json.status === 'success') {
@@ -2129,6 +2152,174 @@
       renderRosterTable();
     }
 
+    // Image Compression & Processing (自動正方形裁切 + 80x80 高清壓縮至約 2KB)
+    function compressAndCropImage(file, targetSize = 80, quality = 0.70) {
+      return new Promise((resolve, reject) => {
+        if (!file || !file.type.startsWith('image/')) {
+          return reject(new Error('請上傳有效圖片格式 (JPG/PNG/WEBP)'));
+        }
+        const reader = new FileReader();
+        reader.onerror = () => reject(new Error('檔案讀取失敗'));
+        reader.onload = (e) => {
+          const img = new Image();
+          img.onerror = () => reject(new Error('圖片解碼失敗'));
+          img.onload = () => {
+            try {
+              const canvas = document.createElement('canvas');
+              canvas.width = targetSize;
+              canvas.height = targetSize;
+              const ctx = canvas.getContext('2d');
+
+              // 填滿白色底圖，避免透明背景 PNG 在 JPEG 壓縮時轉為全黑
+              ctx.fillStyle = '#ffffff';
+              ctx.fillRect(0, 0, targetSize, targetSize);
+
+              // 智慧正方形等比置中裁切 (Cover)
+              const minDim = Math.min(img.width, img.height);
+              const sx = (img.width - minDim) / 2;
+              const sy = (img.height - minDim) / 2;
+
+              ctx.imageSmoothingEnabled = true;
+              ctx.imageSmoothingQuality = 'high';
+              ctx.drawImage(img, sx, sy, minDim, minDim, 0, 0, targetSize, targetSize);
+
+              // 轉為超輕量高品質 JPEG
+              const dataUrl = canvas.toDataURL('image/jpeg', quality);
+              resolve(dataUrl);
+            } catch (err) {
+              reject(err);
+            }
+          };
+          img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function compressImageFromDataUrl(dataUrl, targetSize = 80, quality = 0.70) {
+      return new Promise((resolve) => {
+        if (!dataUrl || !dataUrl.startsWith('data:image/') || dataUrl.length <= 20000) {
+          return resolve(dataUrl);
+        }
+        const img = new Image();
+        img.onload = () => {
+          try {
+            const canvas = document.createElement('canvas');
+            canvas.width = targetSize;
+            canvas.height = targetSize;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, targetSize, targetSize);
+            const minDim = Math.min(img.width, img.height);
+            const sx = (img.width - minDim) / 2;
+            const sy = (img.height - minDim) / 2;
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
+            ctx.drawImage(img, sx, sy, minDim, minDim, 0, 0, targetSize, targetSize);
+            resolve(canvas.toDataURL('image/jpeg', quality));
+          } catch (e) {
+            resolve(dataUrl);
+          }
+        };
+        img.onerror = () => resolve(dataUrl);
+        img.src = dataUrl;
+      });
+    }
+
+    // 自動檢測並安全壓縮所有過往遺留的巨大頭貼 (避免 LocalStorage 或 Google 試算表爆量)
+    async function ensureAllAvatarsOptimized() {
+      let modified = false;
+      if (state.persons && Array.isArray(state.persons)) {
+        for (const p of state.persons) {
+          if (p.avatar && p.avatar.startsWith('data:image/') && p.avatar.length > 20000) {
+            try {
+              p.avatar = await compressImageFromDataUrl(p.avatar, 80, 0.70);
+              modified = true;
+            } catch(e) {}
+          }
+        }
+      }
+      if (state.rosters && Array.isArray(state.rosters)) {
+        for (const r of state.rosters) {
+          if (r.persons && Array.isArray(r.persons)) {
+            for (const p of r.persons) {
+              if (p.avatar && p.avatar.startsWith('data:image/') && p.avatar.length > 20000) {
+                try {
+                  p.avatar = await compressImageFromDataUrl(p.avatar, 80, 0.70);
+                  modified = true;
+                } catch(e) {}
+              }
+            }
+          }
+        }
+      }
+      if (modified) {
+        saveState();
+      }
+    }
+
+    function updatePersonModalPreview() {
+      const container = document.getElementById('modalAvatarPreview');
+      if (!container) return;
+      const name = document.getElementById('personNameInput').value.trim() || '幹';
+      const color = document.getElementById('personColorInput').value || '#10b981';
+      
+      if (tempAvatarBase64) {
+        container.innerHTML = `<img src="${tempAvatarBase64}" style="width: 38px; height: 38px; border-radius: 50%; object-fit: cover; border: 2px solid ${color}; box-shadow: 0 2px 4px rgba(0,0,0,0.15);" alt="頭像預覽">`;
+      } else {
+        const initial = name[0] || '幹';
+        container.innerHTML = `<div style="width: 38px; height: 38px; border-radius: 50%; background-color: ${color}; color: #ffffff; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 17px; border: 1.5px solid #0f172a; box-shadow: 0 2px 4px rgba(0,0,0,0.15);">${initial}</div>`;
+      }
+    }
+
+    async function handleAvatarUpload(event) {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+      
+      const tipEl = document.getElementById('avatarSizeTip');
+      if (tipEl) tipEl.innerText = '處理壓縮中...';
+
+      try {
+        const compressed = await compressAndCropImage(file, 80, 0.70);
+        tempAvatarBase64 = compressed;
+        
+        const urlInput = document.getElementById('personAvatarUrlInput');
+        if (urlInput) urlInput.value = '';
+        
+        updatePersonModalPreview();
+        const kb = (compressed.length * 0.75 / 1024).toFixed(1);
+        if (tipEl) tipEl.innerText = `✅ 已壓縮 (${kb} KB)`;
+        showToast(`頭像已自動完成智慧壓縮 (${kb} KB)`, '🖼️');
+      } catch (err) {
+        alert('照片處理失敗: ' + err.message);
+        if (tipEl) tipEl.innerText = '❌ 處理失敗';
+      }
+    }
+
+    function handleAvatarUrlInput(val) {
+      const clean = val.trim();
+      tempAvatarBase64 = clean;
+      const tipEl = document.getElementById('avatarSizeTip');
+      if (clean) {
+        if (tipEl) tipEl.innerText = '🌐 外部圖片網址';
+      } else {
+        if (tipEl) tipEl.innerText = '';
+      }
+      updatePersonModalPreview();
+    }
+
+    function clearPersonAvatar() {
+      tempAvatarBase64 = '';
+      const fileInput = document.getElementById('personAvatarFile');
+      if (fileInput) fileInput.value = '';
+      const urlInput = document.getElementById('personAvatarUrlInput');
+      if (urlInput) urlInput.value = '';
+      const tipEl = document.getElementById('avatarSizeTip');
+      if (tipEl) tipEl.innerText = '（已移除）';
+      updatePersonModalPreview();
+      showToast('已清除頭貼，還原為姓名代表色圓圈', '⭕');
+    }
+
     // Person Management
     function openAddPersonModal() {
       document.getElementById('personModalTitle').innerText = '新增幹部人員';
@@ -2136,11 +2327,16 @@
       document.getElementById('personNameInput').value = '';
       document.getElementById('personColorInput').value = '#10b981';
       document.getElementById('personAvatarFile').value = '';
+      const urlInput = document.getElementById('personAvatarUrlInput');
+      if (urlInput) urlInput.value = '';
+      const tipEl = document.getElementById('avatarSizeTip');
+      if (tipEl) tipEl.innerText = '';
       document.getElementById('personAutoScheduleModal').checked = true;
       tempAvatarBase64 = '';
       for (let i = 1; i <= 5; i++) {
         document.getElementById(`avail_${i}`).checked = true;
       }
+      updatePersonModalPreview();
       document.getElementById('personModal').classList.add('show');
     }
 
@@ -2152,27 +2348,37 @@
       document.getElementById('personNameInput').value = p.name;
       document.getElementById('personColorInput').value = p.color || '#3b82f6';
       document.getElementById('personAvatarFile').value = '';
-      document.getElementById('personAutoScheduleModal').checked = (p.autoSchedule !== false);
       tempAvatarBase64 = p.avatar || '';
+
+      const urlInput = document.getElementById('personAvatarUrlInput');
+      if (urlInput) {
+        urlInput.value = (tempAvatarBase64 && tempAvatarBase64.startsWith('http')) ? tempAvatarBase64 : '';
+      }
+      const tipEl = document.getElementById('avatarSizeTip');
+      if (tipEl) {
+        if (tempAvatarBase64) {
+          if (tempAvatarBase64.startsWith('http')) {
+            tipEl.innerText = '🌐 外部圖片網址';
+          } else {
+            const kb = (tempAvatarBase64.length * 0.75 / 1024).toFixed(1);
+            tipEl.innerText = `✅ 現有頭像 (${kb} KB)`;
+          }
+        } else {
+          tipEl.innerText = '';
+        }
+      }
+
+      document.getElementById('personAutoScheduleModal').checked = (p.autoSchedule !== false);
       for (let i = 1; i <= 5; i++) {
         document.getElementById(`avail_${i}`).checked = p.avail.includes(i);
       }
+      updatePersonModalPreview();
       document.getElementById('personModal').classList.add('show');
     }
 
     function closePersonModal() {
       document.getElementById('personModal').classList.remove('show');
       tempAvatarBase64 = '';
-    }
-
-    function handleAvatarUpload(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        tempAvatarBase64 = e.target.result;
-      };
-      reader.readAsDataURL(file);
     }
 
     function savePerson() {
@@ -2195,7 +2401,7 @@
           p.color = color;
           p.avail = avail;
           p.autoSchedule = autoSched;
-          if (tempAvatarBase64) p.avatar = tempAvatarBase64;
+          p.avatar = tempAvatarBase64 || '';
         }
       } else {
         const newId = 'p_' + Date.now();
@@ -2203,7 +2409,7 @@
           id: newId,
           name: name,
           color: color,
-          avatar: tempAvatarBase64,
+          avatar: tempAvatarBase64 || '',
           avail: avail,
           autoSchedule: autoSched
         });
@@ -2277,8 +2483,13 @@
       renderRosterTable();
     });
 
+    // Person Modal Realtime Preview Listeners
+    document.getElementById('personNameInput').addEventListener('input', updatePersonModalPreview);
+    document.getElementById('personColorInput').addEventListener('input', updatePersonModalPreview);
+
     // App Initialization
     window.addEventListener('DOMContentLoaded', () => {
+      setTimeout(() => { ensureAllAvatarsOptimized(); }, 1000);
       initOnlineDate();
       loadState();
 
