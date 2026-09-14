@@ -237,15 +237,15 @@
     .text-danger:hover {
       background: #fef2f2 !important;
     }
-    /* File Status Banner */
-    .file-status-box {
+    /* Status Box */
+    .status-box {
       display: flex;
       align-items: center;
       justify-content: space-between;
       padding: 0.5rem 0.75rem;
       border-radius: 0.375rem;
-      background: #f1f5f9;
-      border: 1px solid #cbd5e1;
+      background: #ffffff;
+      border: 1px solid #bfdbfe;
       font-size: 0.8rem;
       margin-bottom: 0.75rem;
     }
@@ -399,17 +399,6 @@
     }
     .btn-warning:hover {
       background-color: #b45309;
-    }
-    .btn-save-disk {
-      background: linear-gradient(135deg, #2563eb, #1d4ed8);
-      color: white;
-      font-size: 0.95rem;
-      padding: 0.65rem 1rem;
-      box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
-    }
-    .btn-save-disk:hover {
-      background: linear-gradient(135deg, #1d4ed8, #1e40af);
-      box-shadow: 0 4px 6px rgba(37, 99, 235, 0.3);
     }
     .btn-group-vertical {
       display: flex;
@@ -716,6 +705,9 @@
     #batchImportModal .modal-dialog {
       max-width: 480px;
     }
+    #passwordModal .modal-dialog {
+      max-width: 380px;
+    }
     /* Toast Notification */
     .toast-notice {
       position: fixed;
@@ -872,17 +864,6 @@
     </div>
   </header>
 
-  <!-- Draft Recovery Banner -->
-  <div id="draftRecoveryBanner" style="display: none; background: #fffbeb; border-bottom: 2px solid #fde68a; padding: 0.6rem 1.5rem; justify-content: space-between; align-items: center; font-size: 0.85rem; color: #92400e;" class="no-print">
-    <div>
-      ⚠️ <strong>偵測到這台電腦有尚未存檔的本機草稿</strong>（編輯於 <span id="draftTimeText"></span>），系統已自動為您載入這份檔案最後儲存的正式內容。
-    </div>
-    <div style="display: flex; gap: 0.5rem;">
-      <button type="button" class="btn btn-outline" style="width: auto; padding: 0.2rem 0.6rem; font-size: 0.8rem; background: white;" onclick="applyDraft()">📝 還原本機草稿</button>
-      <button type="button" class="btn btn-outline" style="width: auto; padding: 0.2rem 0.6rem; font-size: 0.8rem; background: white;" onclick="dismissDraftBanner(true)">🗑️ 捨棄草稿 (以原檔為準)</button>
-    </div>
-  </div>
-
   <!-- Main Grid -->
   <div class="app-container">
 
@@ -906,52 +887,36 @@
         </div>
       </div>
 
-      <!-- Panel 0: Storage & Cloud Sync (檔案儲存與雲端同步) -->
-      <div class="card" style="border: 2px solid #3b82f6; background: #f0fdf4;">
+      <!-- Panel 0: Cloud Sync (純雲端同步管理) -->
+      <div class="card" style="border: 2px solid #2563eb; background: #eff6ff;">
         <h2 class="card-title" style="color: #1d4ed8; border-bottom-color: #bfdbfe;">
-          💾 檔案儲存與雲端同步
+          ☁️ 雲端排班同步
         </h2>
         
-        <div class="file-status-box">
-          <span style="font-size: 0.8rem; color: #475569;" id="linkedFileNameText">已綁定：資訊組電算排班系統.html</span>
-          <span class="status-badge status-unsaved" id="fileStatusBadge">
-            <span id="statusDot">●</span> <span id="fileStatusText">尚未寫入檔案</span>
+        <div class="status-box">
+          <span style="font-size: 0.8rem; color: #1e3a8a; font-weight: 600;" id="cloudSyncInfo">雲端連線：就緒</span>
+          <span class="status-badge status-saved" id="cloudStatusBadge">
+            <span id="cloudStatusDot">●</span> <span id="cloudStatusText">已同步最新</span>
           </span>
         </div>
 
         <div class="btn-group-vertical">
-          <button class="btn btn-save-disk" onclick="saveDirectlyToDisk()">
-            💾 覆蓋儲存本機 HTML 原檔
+          <button class="btn btn-success" style="font-size: 0.95rem; padding: 0.65rem 1rem; box-shadow: 0 2px 4px rgba(5, 150, 105, 0.2);" onclick="syncToCloud()">
+            ☁️ 儲存並發布至雲端
           </button>
           
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem;">
-            <button class="btn btn-outline" style="font-size: 0.75rem; padding: 0.35rem 0.5rem;" onclick="openAndLinkLocalFile()">
-              📂 綁定本機檔
-            </button>
-            <button class="btn btn-outline" style="font-size: 0.75rem; padding: 0.35rem 0.5rem; color: #475569;" onclick="clearLocalCache()">
-              🧹 清除本機暫存
-            </button>
+          <button class="btn btn-outline" style="font-size: 0.85rem; padding: 0.5rem;" onclick="loadFromCloud(true)">
+            📥 從雲端重新載入
+          </button>
+          
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.2rem; padding: 0 2px;">
+            <span style="font-size: 0.725rem; color: #64748b;" id="lastSyncTimeText">上次同步：--</span>
+            <button type="button" class="btn-link-action" style="font-size: 0.75rem; color: #2563eb;" onclick="openPasswordModal()">🔑 修改密碼</button>
           </div>
-
-          <!-- Cloud Sync Section -->
-          <div style="border-top: 1px dashed #cbd5e1; margin-top: 0.35rem; padding-top: 0.45rem;">
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem;">
-              <button class="btn btn-success" style="font-size: 0.8rem; padding: 0.4rem 0.5rem;" onclick="syncToCloud()">
-                ☁️ 同步至雲端
-              </button>
-              <button class="btn btn-outline" style="font-size: 0.8rem; padding: 0.4rem 0.5rem;" onclick="loadFromCloud()">
-                📥 從雲端載入
-              </button>
-            </div>
-            <div style="display: flex; justify-content: flex-end; margin-top: 0.35rem;">
-              <button type="button" class="btn-link-action" style="font-size: 0.75rem;" onclick="openCloudConfigModal()">⚙️ 雲端 API / 密碼設定</button>
-            </div>
-          </div>
-
         </div>
       </div>
 
-      <!-- Panel 1: Roster Config (多排班管理 + 移除學年度學期) -->
+      <!-- Panel 1: Roster Config -->
       <div class="card">
         <h2 class="card-title">📅 排班基本設定</h2>
 
@@ -1002,7 +967,7 @@
         </div>
       </div>
 
-      <!-- Panel 2: Personnel & Availability (加入排班勾選 + 批次匯入/清空) -->
+      <!-- Panel 2: Personnel & Availability -->
       <div class="card">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.6rem;">
           <h2 class="card-title" style="margin-bottom: 0; border: none; padding: 0;">👥 幹部人員</h2>
@@ -1196,34 +1161,38 @@
     </div>
   </div>
 
-  <!-- Cloud Config Modal (雲端設定彈窗) -->
-  <div class="modal-backdrop" id="cloudConfigModal">
-    <div class="modal-dialog">
+  <!-- Password Modal (單拉管理員密碼介面) -->
+  <div class="modal-backdrop" id="passwordModal">
+    <div class="modal-dialog" style="max-width: 380px;">
       <div class="modal-header">
-        <h3>⚙️ 雲端同步設定</h3>
-        <button class="modal-close" onclick="closeCloudConfigModal()">×</button>
+        <h3>🔑 請輸入管理員密碼</h3>
+        <button class="modal-close" onclick="closePasswordModal()">×</button>
       </div>
       <div class="modal-body">
+        <p style="font-size: 0.825rem; color: var(--text-muted);">
+          發布排班至雲端資料庫需驗證組長密碼：
+        </p>
         <div class="form-group">
-          <label>Google Apps Script Web App 網址：</label>
-          <input type="text" id="cloudApiUrlInput" class="form-control" placeholder="https://script.google.com/macros/s/.../exec">
+          <input type="password" id="cloudPasswordInput" class="form-control" placeholder="請輸入管理密碼" onkeydown="if(event.key==='Enter') submitPasswordAndSave()">
         </div>
-        <div class="form-group">
-          <label>管理員儲存密碼：</label>
-          <input type="password" id="cloudPasswordInput" class="form-control" placeholder="輸入後端設定的管理員密碼">
+        <div class="form-group" style="margin-bottom: 0;">
+          <label style="display: flex; align-items: center; gap: 0.4rem; cursor: pointer; font-size: 0.825rem; color: #475569;">
+            <input type="checkbox" id="rememberPasswordCheck" checked>
+            <span>在此裝置記住密碼（下次儲存免重複輸入）</span>
+          </label>
         </div>
       </div>
-      <div class="modal-footer" style="display: flex; justify-content: space-between;">
-        <button type="button" class="btn btn-outline" style="width: auto; padding: 0.4rem 0.75rem;" onclick="testCloudConnection()">🔌 測試連線</button>
-        <div style="display: flex; gap: 0.5rem;">
-          <button class="btn btn-outline" style="width: auto;" onclick="closeCloudConfigModal()">取消</button>
-          <button class="btn btn-primary" style="width: auto;" onclick="saveCloudConfig()">儲存設定</button>
-        </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" style="width: auto;" onclick="closePasswordModal()">取消</button>
+        <button class="btn btn-primary" style="width: auto;" onclick="submitPasswordAndSave()">確認發布</button>
       </div>
     </div>
   </div>
 
   <script>
+    // 綁定的雲端後端 Web App 專屬網址
+    const CLOUD_API_URL = "https://script.google.com/macros/s/AKfycbx2lIE11_0b0EFIFw1gJobKuLzlglnvevf8bsGW3ccu722FcANpsP3xLNP0AdhOWfr5/exec";
+
     // 初始現役幹部名單
     const initialCadres = [
       {
@@ -1311,19 +1280,11 @@
       }
     ];
 
-    // 排班基本設定常數
-    const initialConfig = {
-      "year": 2026,
-      "activeRosterId": "roster_default",
-      "displayMode": "avatar",
-      "cloudApiUrl": "https://script.google.com/macros/s/AKfycbx2lIE11_0b0EFIFw1gJobKuLzlglnvevf8bsGW3ccu722FcANpsP3xLNP0AdhOWfr5/exec",
-      "cloudPassword": "",
-      "fileSavedTime": 1789355000000,
-      "fileSavedAt": "2026-09-14 17:30:00"
-    };
-
     let state = {
-      ...initialConfig,
+      year: 2026,
+      activeRosterId: "roster_default",
+      displayMode: "avatar",
+      cloudPassword: "",
       rosters: JSON.parse(JSON.stringify(initialRosters)),
       persons: JSON.parse(JSON.stringify(initialCadres))
     };
@@ -1340,8 +1301,7 @@
 
     let activeEditingDate = null;
     let tempAvatarBase64 = '';
-    let currentFileHandle = null;
-    let isModifiedSinceLastDiskSave = false;
+    let isModifiedSinceLastSync = false;
 
     // Toast Notice
     function showToast(msg, icon = '💾') {
@@ -1357,21 +1317,25 @@
       }, 3000);
     }
 
-    // Update File Save Status
-    function updateFileStatus(isSaved) {
-      isModifiedSinceLastDiskSave = !isSaved;
-      const badge = document.getElementById('fileStatusBadge');
-      const dot = document.getElementById('statusDot');
-      const text = document.getElementById('fileStatusText');
+    // Update Cloud Sync Status Badge
+    function updateCloudStatus(isSynced, infoText = null) {
+      isModifiedSinceLastSync = !isSynced;
+      const badge = document.getElementById('cloudStatusBadge');
+      const dot = document.getElementById('cloudStatusDot');
+      const text = document.getElementById('cloudStatusText');
+      const info = document.getElementById('cloudSyncInfo');
+
+      if (infoText && info) info.innerText = infoText;
       if (!badge || !text) return;
-      if (isSaved) {
+
+      if (isSynced) {
         badge.className = 'status-badge status-saved';
         dot.innerText = '●';
-        text.innerText = '已覆蓋至檔案';
+        text.innerText = '已同步最新';
       } else {
         badge.className = 'status-badge status-unsaved';
         dot.innerText = '●';
-        text.innerText = '尚未寫入檔案';
+        text.innerText = '有未發布變更';
       }
     }
 
@@ -1395,17 +1359,16 @@
         cur.timeSlot = document.getElementById('timeSlotInput').value;
         cur.footnote = document.getElementById('footnoteInput').value;
         cur.month = parseInt(document.getElementById('monthSelect').value, 10);
-        cur.persons = JSON.parse(JSON.stringify(state.persons)); // 儲存該排班目前的幹部名單
+        cur.persons = JSON.parse(JSON.stringify(state.persons));
       }
       state.activeRosterId = newId;
       const next = getActiveRoster();
       if (next) {
-        // 切換為新排班專屬的幹部名單！
         if (next.persons && Array.isArray(next.persons)) {
           state.persons = JSON.parse(JSON.stringify(next.persons));
         } else {
-          state.persons = JSON.parse(JSON.stringify(initialCadres));
-          next.persons = JSON.parse(JSON.stringify(state.persons));
+          next.persons = [];
+          state.persons = [];
         }
       }
       applyActiveRosterToUI();
@@ -1467,6 +1430,10 @@
       if (!confirm(`確認要刪除排班表「${cur.name}」嗎？此排班內的所有日期資料將被移除。`)) return;
       state.rosters = state.rosters.filter(x => x.id !== cur.id);
       state.activeRosterId = state.rosters[0].id;
+      const next = getActiveRoster();
+      if (next && Array.isArray(next.persons)) {
+        state.persons = JSON.parse(JSON.stringify(next.persons));
+      }
       renderRosterSelect();
       applyActiveRosterToUI();
       renderPersonnelList();
@@ -1491,11 +1458,13 @@
       const p = state.persons.find(x => x.id === personId);
       if (!p) return;
       p.autoSchedule = isChecked;
+      const cur = getActiveRoster();
+      if (cur) cur.persons = JSON.parse(JSON.stringify(state.persons));
       saveState();
       showToast(`${p.name} ${isChecked ? '已加入' : '已排除'}自動排班`, isChecked ? '✅' : '⏸️');
     }
 
-    // Batch Import Cadres (Excel column copy-paste)
+    // Batch Import Cadres
     function openBatchImportModal() {
       document.getElementById('batchImportText').value = '';
       document.getElementById('batchImportModal').classList.add('show');
@@ -1517,8 +1486,7 @@
       if (lines.length === 0) return;
 
       let addedCount = 0;
-      lines.forEach((name, idx) => {
-        // 檢查是否已存在同名幹部
+      lines.forEach((name) => {
         const exists = state.persons.some(p => p.name === name);
         if (!exists) {
           const color = defaultColorPalette[(state.persons.length + addedCount) % defaultColorPalette.length];
@@ -1534,7 +1502,7 @@
         }
       });
 
-            const cur = getActiveRoster();
+      const cur = getActiveRoster();
       if (cur) cur.persons = JSON.parse(JSON.stringify(state.persons));
       saveState();
       renderPersonnelList();
@@ -1544,7 +1512,7 @@
     }
 
     function clearAllPersons() {
-      if (!confirm('確認要清空「全部幹部名單」嗎？\n此動作將移除所有人員，現有排班人員將變為未指派。')) return;
+      if (!confirm('確認要清空此排班的「幹部名單」嗎？\n現有排班人員將變為未指派。')) return;
       state.persons = [];
       const cur = getActiveRoster();
       if (cur) cur.persons = [];
@@ -1559,36 +1527,44 @@
       showToast('已清空幹部名單', '🗑️');
     }
 
-    // Cloud Storage Modal & Sync
-    function openCloudConfigModal() {
-      document.getElementById('cloudApiUrlInput').value = state.cloudApiUrl || 'https://script.google.com/macros/s/AKfycbx2lIE11_0b0EFIFw1gJobKuLzlglnvevf8bsGW3ccu722FcANpsP3xLNP0AdhOWfr5/exec';
+    // Password Modal & Cloud Sync
+    function openPasswordModal() {
       document.getElementById('cloudPasswordInput').value = state.cloudPassword || '';
-      document.getElementById('cloudConfigModal').classList.add('show');
+      document.getElementById('passwordModal').classList.add('show');
+      setTimeout(() => document.getElementById('cloudPasswordInput').focus(), 150);
     }
 
-    function closeCloudConfigModal() {
-      document.getElementById('cloudConfigModal').classList.remove('show');
+    function closePasswordModal() {
+      document.getElementById('passwordModal').classList.remove('show');
     }
 
-    function saveCloudConfig() {
-      state.cloudApiUrl = document.getElementById('cloudApiUrlInput').value.trim();
-      state.cloudPassword = document.getElementById('cloudPasswordInput').value.trim();
-      saveState();
-      closeCloudConfigModal();
-      showToast('已儲存雲端設定', '⚙️');
+    function submitPasswordAndSave() {
+      const pwd = document.getElementById('cloudPasswordInput').value.trim();
+      if (!pwd) {
+        alert('請輸入管理員密碼！');
+        return;
+      }
+      state.cloudPassword = pwd;
+      if (document.getElementById('rememberPasswordCheck').checked) {
+        try { localStorage.setItem('chin_yi_cloud_pwd', pwd); } catch(e){}
+      } else {
+        try { localStorage.removeItem('chin_yi_cloud_pwd'); } catch(e){}
+      }
+      closePasswordModal();
+      executeCloudSync();
     }
 
+    // Humanized Cloud Sync
     async function syncToCloud() {
-      if (!state.cloudApiUrl) {
-        openCloudConfigModal();
+      // 若尚未記錄密碼，彈出簡潔密碼視窗
+      if (!state.cloudPassword) {
+        openPasswordModal();
         return;
       }
-      if (state.cloudApiUrl.includes('/edit')) {
-        alert('⚠️ 雲端網址填寫錯誤！\n您填入的是 Apps Script 編輯器網址，必須填入點擊「部署」後產生的「網頁應用程式網址」（結尾為 /exec）。\n\n請點選「⚙️ 雲端設定」重新修改。');
-        openCloudConfigModal();
-        return;
-      }
+      executeCloudSync();
+    }
 
+    async function executeCloudSync() {
       const cur = getActiveRoster();
       if (cur) {
         cur.persons = JSON.parse(JSON.stringify(state.persons));
@@ -1598,246 +1574,79 @@
         cur.month = parseInt(document.getElementById('monthSelect').value, 10);
       }
 
-      showToast('正在同步至 Google 試算表...', '⏳');
+      updateCloudStatus(false, '雲端連線：正在發布...');
+      showToast('正在發布至 Google 試算表...', '⏳');
+
       try {
         const payload = {
           password: state.cloudPassword,
-          data: state
+          data: {
+            year: state.year,
+            activeRosterId: state.activeRosterId,
+            displayMode: state.displayMode,
+            rosters: state.rosters,
+            persons: state.persons
+          }
         };
-        const res = await fetch(state.cloudApiUrl, {
+        const res = await fetch(CLOUD_API_URL, {
           method: 'POST',
           body: JSON.stringify(payload)
         });
         const json = await res.json();
         if (json.status === 'success') {
-          showToast('🎉 已成功同步至雲端試算表！', '☁️');
-          alert('🎉 雲端同步成功！\n已成功將所有排班資料與幹部名單同步至 Google 試算表，並已為您自動更新/建立所有排班工作表！');
+          const now = new Date();
+          const timeStr = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+          document.getElementById('lastSyncTimeText').innerText = `上次同步：${timeStr}`;
+          updateCloudStatus(true, '雲端連線：正常');
+          showToast('🎉 已成功發布至雲端！', '☁️');
         } else {
-          alert('同步失敗: ' + (json.message || '未知錯誤'));
+          updateCloudStatus(false, '雲端連線：驗證失敗');
+          alert('發布失敗: ' + (json.message || '密碼錯誤'));
+          openPasswordModal();
         }
       } catch (err) {
-        alert('連線雲端失敗: ' + err + '\n\n請確認：\n1. 部署作業中的「誰可以存取」是否選為「所有人 (Anyone)」\n2. 網址結尾是否為 /exec\n3. 是否已將最新的後端程式碼貼入並重新部署。');
+        updateCloudStatus(false, '雲端連線：連線異常');
+        alert('連線雲端失敗: ' + err);
       }
     }
 
-    async function testCloudConnection() {
-      const url = document.getElementById('cloudApiUrlInput').value.trim();
-      if (!url) {
-        alert('請先填入 Web App 網址！');
-        return;
-      }
-      if (url.includes('/edit')) {
-        alert('⚠️ 網址填寫錯誤！\n您填入的是 Apps Script 編輯器網址，必須是點擊「部署」後產生的「網頁應用程式網址」（結尾為 /exec）。');
-        return;
-      }
-      showToast('正在測試連線...', '⏳');
-      try {
-        const res = await fetch(url);
-        const json = await res.json();
-        alert('✅ 連線測試成功！\n成功連線至 Google 試算表後端 API。');
-      } catch (err) {
-        alert('❌ 連線失敗: ' + err + '\n\n可能原因：\n1. 部署作業中的「誰可以存取」未設定為「所有人 (Anyone)」\n2. 網址不正確（需為 /exec 結尾）');
-      }
-    }
+    // Humanized Cloud Load (自動/手動載入)
+    async function loadFromCloud(manual = false) {
+      if (manual && !confirm('確認要從雲端重新下載最新排班並刷新畫面嗎？')) return;
 
-    async function loadFromCloud() {
-      if (!state.cloudApiUrl) {
-        openCloudConfigModal();
-        return;
-      }
-      if (!confirm('確認要從雲端下載最新排班並覆蓋目前畫面嗎？')) return;
-      showToast('正在讀取雲端...', '⏳');
+      updateCloudStatus(false, '雲端連線：正在同步最新排班...');
+      if (manual) showToast('正在從雲端載入最新排班...', '⏳');
+
       try {
-        const res = await fetch(state.cloudApiUrl);
+        const res = await fetch(CLOUD_API_URL);
         const json = await res.json();
         if (json && (json.persons || json.rosters)) {
-          if (json.persons) state.persons = json.persons;
-          if (json.rosters) state.rosters = json.rosters;
+          if (json.rosters && Array.isArray(json.rosters)) state.rosters = json.rosters;
           if (json.activeRosterId) state.activeRosterId = json.activeRosterId;
+          const cur = getActiveRoster();
+          if (cur && Array.isArray(cur.persons)) {
+            state.persons = JSON.parse(JSON.stringify(cur.persons));
+          } else if (json.persons && Array.isArray(json.persons)) {
+            state.persons = json.persons;
+          }
           renderRosterSelect();
           applyActiveRosterToUI();
           renderPersonnelList();
           renderRosterTable();
           saveState();
-          showToast('🎉 已成功從雲端載入最新排班！', '📥');
+
+          const now = new Date();
+          const timeStr = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+          document.getElementById('lastSyncTimeText').innerText = `上次同步：${timeStr}`;
+          updateCloudStatus(true, '雲端連線：正常');
+          if (manual) showToast('🎉 已載入雲端最新排班！', '📥');
         } else {
-          alert('雲端資料庫目前為空或格式不符。');
+          updateCloudStatus(true, '雲端連線：就緒');
         }
       } catch (err) {
-        alert('讀取雲端失敗: ' + err);
+        console.warn('自動同步雲端失敗，以本機快取顯示:', err);
+        updateCloudStatus(true, '離線模式（載入快取）');
       }
-    }
-
-    // Generate Full HTML with Current State baked in
-    function generateBakedHtml() {
-      let docClone = document.documentElement.cloneNode(true);
-      
-      const modalBackdrops = docClone.querySelectorAll('.modal-backdrop');
-      modalBackdrops.forEach(m => m.classList.remove('show'));
-      const toast = docClone.querySelector('.toast-notice');
-      if (toast) toast.classList.remove('show');
-
-      const cur = getActiveRoster();
-      if (cur) {
-        const rosterTitleEl = docClone.querySelector('#rosterTitleInput');
-        if (rosterTitleEl) rosterTitleEl.setAttribute('value', cur.title);
-
-        const timeSlotEl = docClone.querySelector('#timeSlotInput');
-        if (timeSlotEl) timeSlotEl.setAttribute('value', cur.timeSlot);
-
-        const footnoteEl = docClone.querySelector('#footnoteInput');
-        if (footnoteEl) footnoteEl.setAttribute('value', cur.footnote);
-
-        const titleDisplayEl = docClone.querySelector('#displayRosterTitle');
-        if (titleDisplayEl) titleDisplayEl.innerText = cur.title;
-
-        const footnoteDisplayEl = docClone.querySelector('#displayFootnote');
-        if (footnoteDisplayEl) footnoteDisplayEl.innerText = cur.footnote;
-
-        const monthOptions = docClone.querySelectorAll('#monthSelect option');
-        monthOptions.forEach(opt => {
-          if (opt.value === String(cur.month)) {
-            opt.setAttribute('selected', 'selected');
-          } else {
-            opt.removeAttribute('selected');
-          }
-        });
-      }
-
-      let htmlContent = '<!DOCTYPE html>\n<html lang="zh-TW">\n' + docClone.innerHTML + '\n</html>';
-
-      const now = new Date();
-      const timeStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
-      const saveTimestamp = Date.now();
-
-      state.fileSavedTime = saveTimestamp;
-      state.fileSavedAt = timeStr;
-
-      const cadresJson = JSON.stringify(state.persons, null, 6);
-      const rostersJson = JSON.stringify(state.rosters, null, 6);
-      const currentConfig = {
-        year: state.year,
-        activeRosterId: state.activeRosterId,
-        displayMode: state.displayMode,
-        cloudApiUrl: state.cloudApiUrl || 'https://script.google.com/macros/s/AKfycbx2lIE11_0b0EFIFw1gJobKuLzlglnvevf8bsGW3ccu722FcANpsP3xLNP0AdhOWfr5/exec',
-        cloudPassword: state.cloudPassword || '',
-        fileSavedTime: saveTimestamp,
-        fileSavedAt: timeStr
-      };
-      const configJson = JSON.stringify(currentConfig, null, 6);
-
-      htmlContent = htmlContent.replace(
-        /const initialCadres = \[[\s\S]*?\];/,
-        `const initialCadres = ${cadresJson};`
-      );
-
-      htmlContent = htmlContent.replace(
-        /const initialRosters = \[[\s\S]*?\];/,
-        `const initialRosters = ${rostersJson};`
-      );
-
-      htmlContent = htmlContent.replace(
-        /const initialConfig = \{[\s\S]*?\};/,
-        `const initialConfig = ${configJson};`
-      );
-
-      return htmlContent;
-    }
-
-    // File System Access API
-    async function openAndLinkLocalFile() {
-      if (!('showOpenFilePicker' in window)) {
-        alert('您的瀏覽器不支援本機直接存取 API，建議使用 Chrome 或 Edge 即可享受直接覆蓋功能！');
-        return;
-      }
-      try {
-        const [handle] = await window.showOpenFilePicker({
-          types: [{
-            description: 'HTML 網頁檔案',
-            accept: { 'text/html': ['.html', '.htm'] }
-          }],
-          multiple: false
-        });
-        currentFileHandle = handle;
-        const file = await handle.getFile();
-        document.getElementById('linkedFileNameText').innerText = `已綁定：${file.name}`;
-        showToast(`已成功連結：${file.name}`, '📂');
-      } catch (err) {
-        if (err.name !== 'AbortError') console.error(err);
-      }
-    }
-
-    async function saveDirectlyToDisk() {
-      // 存檔前同步當前畫面的設定至 active roster
-      const cur = getActiveRoster();
-      if (cur) {
-        cur.title = document.getElementById('rosterTitleInput').value;
-        cur.timeSlot = document.getElementById('timeSlotInput').value;
-        cur.footnote = document.getElementById('footnoteInput').value;
-        cur.month = parseInt(document.getElementById('monthSelect').value, 10);
-      }
-
-      const fullHtml = generateBakedHtml();
-
-      if (currentFileHandle) {
-        try {
-          if (await verifyPermission(currentFileHandle, true)) {
-            const writable = await currentFileHandle.createWritable();
-            await writable.write(fullHtml);
-            await writable.close();
-            updateFileStatus(true);
-            showToast(`已覆蓋寫入：${currentFileHandle.name}！`, '✅');
-            return;
-          }
-        } catch (err) {
-          console.warn('使用現有 Handle 覆寫失敗，嘗試重新選擇：', err);
-        }
-      }
-
-      if ('showSaveFilePicker' in window) {
-        try {
-          const options = {
-            suggestedName: '資訊組電算排班系統.html',
-            types: [{
-              description: 'HTML 網頁檔案',
-              accept: { 'text/html': ['.html', '.htm'] }
-            }]
-          };
-          const handle = await window.showSaveFilePicker(options);
-          const writable = await handle.createWritable();
-          await writable.write(fullHtml);
-          await writable.close();
-          currentFileHandle = handle;
-          document.getElementById('linkedFileNameText').innerText = `已綁定：${handle.name}`;
-          updateFileStatus(true);
-          showToast(`已成功覆蓋寫入 ${handle.name}！`, '🎉');
-          return;
-        } catch (err) {
-          if (err.name === 'AbortError') return;
-          console.warn('showSaveFilePicker 失敗，改用下載方式：', err);
-        }
-      }
-
-      // Fallback download
-      const blob = new Blob([fullHtml], { type: 'text/html;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = '資訊組電算排班系統.html';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      updateFileStatus(true);
-      showToast('已下載最新檔案，請取代原檔案！', '💾');
-    }
-
-    async function verifyPermission(fileHandle, readWrite) {
-      const options = {};
-      if (readWrite) options.mode = 'readwrite';
-      if ((await fileHandle.queryPermission(options)) === 'granted') return true;
-      if ((await fileHandle.requestPermission(options)) === 'granted') return true;
-      return false;
     }
 
     // Avatar Badge
@@ -1868,99 +1677,35 @@
       return { year: currentYear, month: currentMonth, date: currentDate };
     }
 
-    // Smart Load State (File-first priority)
+    // Local Storage load (Cache only)
     function loadState() {
-      if (typeof initialConfig === 'object') Object.assign(state, initialConfig);
-      if (Array.isArray(initialRosters)) state.rosters = JSON.parse(JSON.stringify(initialRosters));
-      const curActive = getActiveRoster();
-      if (curActive && Array.isArray(curActive.persons)) {
-        state.persons = JSON.parse(JSON.stringify(curActive.persons));
-      } else if (Array.isArray(initialCadres)) {
-        state.persons = JSON.parse(JSON.stringify(initialCadres));
-        if (curActive) curActive.persons = JSON.parse(JSON.stringify(state.persons));
-      }
+      try {
+        const savedPwd = localStorage.getItem('chin_yi_cloud_pwd');
+        if (savedPwd) state.cloudPassword = savedPwd;
+      } catch(e){}
 
-      const saved = localStorage.getItem('chin_yi_schedule_state_v4');
+      const saved = localStorage.getItem('chin_yi_schedule_state_cloud');
       if (saved) {
         try {
           const parsed = JSON.parse(saved);
-          const localSavedTime = parsed.fileSavedTime || 0;
-          const fileSavedTime = (typeof initialConfig === 'object' && initialConfig.fileSavedTime) || 0;
-
-          if (fileSavedTime >= localSavedTime) {
-            localStorage.setItem('chin_yi_schedule_state_v4', JSON.stringify(state));
-            return;
+          if (parsed.rosters && Array.isArray(parsed.rosters)) state.rosters = parsed.rosters;
+          if (parsed.activeRosterId) state.activeRosterId = parsed.activeRosterId;
+          const cur = getActiveRoster();
+          if (cur && Array.isArray(cur.persons)) {
+            state.persons = JSON.parse(JSON.stringify(cur.persons));
           }
-
-          if (localSavedTime > fileSavedTime + 2000) {
-            showDraftRecoveryBanner(parsed);
-          }
-        } catch(e) {
-          console.error(e);
-        }
-      } else {
-        localStorage.setItem('chin_yi_schedule_state_v4', JSON.stringify(state));
+        } catch(e){}
       }
-    }
-
-    function showDraftRecoveryBanner(draftData) {
-      const banner = document.getElementById('draftRecoveryBanner');
-      const timeElem = document.getElementById('draftTimeText');
-      if (!banner || !timeElem) return;
-      timeElem.innerText = draftData.fileSavedAt || '稍早編輯';
-      banner.style.display = 'flex';
-    }
-
-    function applyDraft() {
-      const saved = localStorage.getItem('chin_yi_schedule_state_v4');
-      if (!saved) return;
-      try {
-        const parsed = JSON.parse(saved);
-        if (parsed.rosters) state.rosters = parsed.rosters;
-        if (parsed.activeRosterId) state.activeRosterId = parsed.activeRosterId;
-        const curDraft = getActiveRoster();
-        if (curDraft && Array.isArray(curDraft.persons)) {
-          state.persons = JSON.parse(JSON.stringify(curDraft.persons));
-        } else if (parsed.persons) {
-          state.persons = parsed.persons;
-        }
-        renderRosterSelect();
-        applyActiveRosterToUI();
-        renderPersonnelList();
-        renderRosterTable();
-        updateFileStatus(false);
-        dismissDraftBanner(false);
-        showToast('已還原本機草稿', '📝');
-      } catch(e) {
-        console.error(e);
-      }
-    }
-
-    function dismissDraftBanner(discard = false) {
-      const banner = document.getElementById('draftRecoveryBanner');
-      if (banner) banner.style.display = 'none';
-      if (discard) {
-        localStorage.setItem('chin_yi_schedule_state_v4', JSON.stringify(state));
-        showToast('已捨棄本機舊暫存', '🧹');
-      }
-    }
-
-    function clearLocalCache() {
-      if (!confirm('確認要清除這台電腦上的暫存嗎？\n清除後將強制重新讀取本 HTML 檔案最後儲存的內容。')) return;
-      localStorage.removeItem('chin_yi_schedule_state_v4');
-      localStorage.removeItem('chin_yi_schedule_state_v3');
-      localStorage.removeItem('chin_yi_schedule_state_v2');
-      localStorage.removeItem('chin_yi_schedule_state');
-      location.reload();
     }
 
     function saveState() {
       try {
-        localStorage.setItem('chin_yi_schedule_state_v4', JSON.stringify(state));
-        updateFileStatus(false);
-      } catch(e) {
-        console.warn('LocalStorage save failed:', e);
-      }
+        localStorage.setItem('chin_yi_schedule_state_cloud', JSON.stringify({
+          rosters: state.rosters,
+          activeRosterId: state.activeRosterId
+        }));
+        updateCloudStatus(false);
+      } catch(e){}
     }
 
     // Shift counts for CURRENT month in ACTIVE roster
@@ -2463,7 +2208,7 @@
           autoSchedule: autoSched
         });
       }
-            const cur = getActiveRoster();
+      const cur = getActiveRoster();
       if (cur) cur.persons = JSON.parse(JSON.stringify(state.persons));
       saveState();
       renderPersonnelList();
@@ -2486,6 +2231,8 @@
           }
         }
       });
+      const cur = getActiveRoster();
+      if (cur) cur.persons = JSON.parse(JSON.stringify(state.persons));
       saveState();
       renderPersonnelList();
       renderRosterTable();
@@ -2520,7 +2267,6 @@
       const cur = getActiveRoster();
       if (cur) {
         cur.month = newMonth;
-        // 智慧替換標題中的月份文字（如：九月份 -> 十月份）
         const monthChinese = ['', '一', '二', '三', '四', '五', '六', '七', '八', '九', '十', '十一', '十二'];
         cur.title = cur.title.replace(/[一二三四五六七八九十兩0-9]+月份/, monthChinese[newMonth] + '月份');
         document.getElementById('rosterTitleInput').value = cur.title;
@@ -2539,8 +2285,6 @@
       const cur = getActiveRoster();
       if (cur && Array.isArray(cur.persons)) {
         state.persons = JSON.parse(JSON.stringify(cur.persons));
-      } else if (cur) {
-        cur.persons = JSON.parse(JSON.stringify(state.persons));
       }
 
       renderRosterSelect();
@@ -2551,7 +2295,9 @@
 
       renderPersonnelList();
       renderRosterTable();
-      updateFileStatus(true);
+
+      // 人性化自動連線同步：開檔時自動向雲端檢查並載入最新排班！
+      loadFromCloud(false);
     });
   </script>
 </body>
