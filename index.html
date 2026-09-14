@@ -909,9 +909,12 @@
             📥 從雲端重新載入
           </button>
           
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.2rem; padding: 0 2px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.25rem; padding: 0 2px;">
             <span style="font-size: 0.725rem; color: #64748b;" id="lastSyncTimeText">上次同步：--</span>
-            <button type="button" class="btn-link-action" style="font-size: 0.75rem; color: #2563eb;" onclick="openPasswordModal()">🔑 修改密碼</button>
+            <span style="display: flex; gap: 8px;">
+              <button type="button" class="btn-link-action" style="font-size: 0.75rem; color: #2563eb;" onclick="openPasswordModal()">🔑 密碼</button>
+              <button type="button" class="btn-link-action" style="font-size: 0.75rem; color: #dc2626;" onclick="clearLocalCacheAndReset()" title="清除本機暫存歷史與舊圖快取，重載雲端">🧹 清除快取</button>
+            </span>
           </div>
         </div>
       </div>
@@ -1572,7 +1575,22 @@
     }
 
     // Humanized Cloud Sync
-    async function syncToCloud() {
+    async     // Clear Local Storage Cache & Reload from Cloud
+    function clearLocalCacheAndReset() {
+      if (!confirm('確認要清除此瀏覽器的「本機快取暫存」嗎？\n\n💡 說明：這會清空本機殘留的歷史暫存（包括過去塞爆的舊圖片紀錄），並自動向雲端重新抓取最乾淨的排班資料。')) return;
+      try {
+        localStorage.removeItem('chin_yi_schedule_state_cloud');
+        localStorage.removeItem('cadre_scheduler_backup');
+        localStorage.removeItem('chin_yi_scheduler_state');
+        localStorage.removeItem('chin_yi_cadres_list');
+      } catch(e){}
+      showToast('🧹 已清除本機快取！正在重新同步雲端...', '✨');
+      setTimeout(() => {
+        loadFromCloud(false);
+      }, 300);
+    }
+
+function syncToCloud() {
       // 若尚未記錄密碼，彈出簡潔密碼視窗
       if (!state.cloudPassword) {
         openPasswordModal();
